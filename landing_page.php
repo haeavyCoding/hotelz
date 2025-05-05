@@ -40,6 +40,24 @@ if (isset($_GET['id'])) {
     header("HTTP/1.0 400 Bad Request");
     die("Invalid request");
 }
+
+// Fetch visibility status for all items
+$visibilitySql = "SELECT item_name, is_visible FROM item_visibility WHERE hotel_id = $id";
+$visibilityResult = $conn->query($visibilitySql);
+$itemVisibility = [];
+
+if ($visibilityResult->num_rows > 0) {
+    while ($row = $visibilityResult->fetch_assoc()) {
+        $itemVisibility[$row['item_name']] = $row['is_visible'];
+    }
+}
+
+// Function to check if item should be displayed
+function shouldDisplayItem($itemName, $itemVisibility) {
+    // If no record exists, default to visible
+    return !isset($itemVisibility[$itemName]) || $itemVisibility[$itemName];
+}
+
 // Increment visit counter first
 $conn->begin_transaction();
 try {
@@ -607,36 +625,51 @@ try {
                 ?>
                 <!-- Basic Plan Services -->
                 <div class="item">
+                    <?php if (shouldDisplayItem('google_review', $itemVisibility)): ?>
                     <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Google Review&track=<?php echo urlencode(htmlspecialchars($hotel['google_review_link'])); ?>" class="service-item service-card">
                         <i class="fab fa-google"></i>
                         <p>Review Us</p>
                     </a>
+                    <?php endif; ?>
+                    
+                    <?php if (shouldDisplayItem('instagram', $itemVisibility)): ?>
                     <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Instagram&track=<?php echo urlencode(htmlspecialchars($hotel['instagram_link'])); ?>" class="service-item service-card">
                         <i class="fab fa-instagram"></i>
                         <p>Follow Us!</p>
                     </a>
+                    <?php endif; ?>
                 </div>
 
                 <div class="item">
+                    <?php if (shouldDisplayItem('facebook', $itemVisibility)): ?>
                     <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Facebook&track=<?php echo urlencode(htmlspecialchars($hotel['facebook_link'])); ?>" class="service-item service-card">
                         <i class="fab fa-facebook-f"></i>
                         <p>Like Us</p>
                     </a>
+                    <?php endif; ?>
+                    
+                    <?php if (shouldDisplayItem('whatsapp', $itemVisibility)): ?>
                     <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=WhatsApp&track=<?php echo urlencode('https://wa.me/'.htmlspecialchars($hotel['whatsapp'])); ?>" class="service-item service-card">
                         <i class="fab fa-whatsapp"></i>
                         <p>Chat With Us</p>
                     </a>
+                    <?php endif; ?>
                 </div>
 
                 <div class="item">
+                    <?php if (shouldDisplayItem('phone', $itemVisibility)): ?>
                     <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Phone Call&track=<?php echo urlencode('tel:'.htmlspecialchars($hotel['phone'])); ?>" class="service-item service-card">
                         <i class="fas fa-phone-alt"></i>
                         <p>Call Us</p>
                     </a>
+                    <?php endif; ?>
+                    
+                    <?php if (shouldDisplayItem('local_attractions', $itemVisibility)): ?>
                     <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Local Attractions&track=<?php echo urlencode('places/lucknow_places.php?hotel_id='.$id); ?>" class="service-item service-card">
                         <i class="fas fa-map-signs"></i>
                         <p>Local Attractions</p>
                     </a>
+                    <?php endif; ?>
                 </div>
                 <?php
             }
@@ -645,40 +678,55 @@ try {
                 ?>
                 <!-- Advanced Plan Services -->
                 <div class="item">
+                    <?php if (shouldDisplayItem('google_review', $itemVisibility)): ?>
                     <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Google Review&track=<?php echo urlencode('google_review/index.php?id='.$hotel['id']); ?>" class="service-item service-card">
                         <i class="fab fa-google"></i>
                         <p>Review Us</p>
                     </a>
+                    <?php endif; ?>
+                    
+                    <?php if (shouldDisplayItem('facebook', $itemVisibility)): ?>
                     <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Facebook&track=<?php echo urlencode(htmlspecialchars($hotel['facebook_link'])); ?>" class="service-item service-card">
                         <i class="fab fa-facebook-f"></i>
                         <p>Like Us</p>
                     </a>
+                    <?php endif; ?>
                 </div>
 
                 <div class="item">
+                    <?php if (shouldDisplayItem('instagram', $itemVisibility)): ?>
                     <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Instagram&track=<?php echo urlencode(htmlspecialchars($hotel['instagram_link'])); ?>" class="service-item service-card">
                         <i class="fab fa-instagram"></i>
                         <p>Follow Us!</p>
                     </a>
+                    <?php endif; ?>
+                    
+                    <?php if (shouldDisplayItem('whatsapp', $itemVisibility)): ?>
                     <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=WhatsApp&track=<?php echo urlencode('https://wa.me/'.htmlspecialchars($hotel['whatsapp'])); ?>" class="service-item service-card">
                         <i class="fab fa-whatsapp"></i>
                         <p>Chat With Us</p>
                     </a>
+                    <?php endif; ?>
                 </div>
 
                 <div class="item">
-                <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Phone Call&track=<?php echo urlencode('tel:'.htmlspecialchars($hotel['phone'])); ?>" class="service-item service-card">
+                    <?php if (shouldDisplayItem('phone', $itemVisibility)): ?>
+                    <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Phone Call&track=<?php echo urlencode('tel:'.htmlspecialchars($hotel['phone'])); ?>" class="service-item service-card">
                         <i class="fas fa-phone-alt"></i>
                         <p>Call Us</p>
                     </a>
+                    <?php endif; ?>
+                    
+                    <?php if (shouldDisplayItem('local_attractions', $itemVisibility)): ?>
                     <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Local Attractions&track=<?php echo urlencode('places/lucknow_places.php?hotel_id='.$id); ?>" class="service-item service-card">
                         <i class="fas fa-map-signs"></i>
                         <p>Local Attractions</p>
                     </a>
-                   
+                    <?php endif; ?>
                 </div>
 
                 <div class="item">
+                    <?php if (shouldDisplayItem('dining_menu', $itemVisibility)): ?>
                     <?php
                     $diningMenu = $hotel['dining_menu'];
                     if (filter_var($diningMenu, FILTER_VALIDATE_URL)) {
@@ -691,22 +739,30 @@ try {
                         <i class="fas fa-concierge-bell"></i>
                         <p>Dining Menu</p>
                     </a>
+                    <?php endif; ?>
+                    
+                    <?php if (shouldDisplayItem('amenities', $itemVisibility)): ?>
                     <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Amenities&track=<?php echo urlencode('amenities/amenities.php?id='.$id); ?>" class="service-item service-card">
                         <i class="fas fa-spa"></i>
                         <p>Amenities</p>
                     </a>
+                    <?php endif; ?>
                 </div>
 
                 <div class="item">
+                    <?php if (shouldDisplayItem('tv_channels', $itemVisibility)): ?>
                     <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=TV Channels&track=#" class="service-item service-card">
                         <i class="fas fa-tv"></i>
                         <p>TV Channels</p>
                     </a>
+                    <?php endif; ?>
+                    
+                    <?php if (shouldDisplayItem('compass', $itemVisibility)): ?>
                     <a href="https://haeavycoding.github.io/compass/" class="service-item service-card">
-    <i class="fas fa-compass"></i>
-    <p>Digital Compass</p>
-</a>
-
+                        <i class="fas fa-compass"></i>
+                        <p>Digital Compass</p>
+                    </a>
+                    <?php endif; ?>
                 </div>
                 <?php
             }
@@ -715,10 +771,14 @@ try {
                 ?>
                 <!-- Premium Plan Services - Includes all services -->
                 <div class="item">
+                    <?php if (shouldDisplayItem('google_review', $itemVisibility)): ?>
                     <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Google Review&track=<?php echo urlencode('google_review/index.php?id='.$hotel['id']); ?>" class="service-item service-card">
                         <i class="fab fa-google"></i>
                         <p>Review Us</p>
                     </a>
+                    <?php endif; ?>
+                    
+                    <?php if (shouldDisplayItem('dining_menu', $itemVisibility)): ?>
                     <?php
                     $diningMenu = $hotel['dining_menu'];
                     if (filter_var($diningMenu, FILTER_VALIDATE_URL)) {
@@ -727,94 +787,132 @@ try {
                         $link = "dining_menu/dining_menu.php?id=" . $hotel["id"];
                     }
                     ?>
-                  <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=WhatsApp&track=<?php echo urlencode('https://wa.me/'.htmlspecialchars($hotel['whatsapp'])); ?>" class="service-item service-card">
-                        <i class="fab fa-whatsapp"></i>
-                        <p>Chat With Us</p>
-                    </a>
-                </div>
-
-                <div class="item">
-                    <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Facebook&track=<?php echo urlencode(htmlspecialchars($hotel['facebook_link'])); ?>" class="service-item service-card">
-                        <i class="fab fa-facebook-f"></i>
-                        <p>Like Us</p>
-                    </a>
-                    <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Phone Call&track=<?php echo urlencode('tel:'.htmlspecialchars($hotel['phone'])); ?>" class="service-item service-card">
-                        <i class="fas fa-phone-alt"></i>
-                        <p>Call Us</p>
-                    </a>
-                </div>
-
-                <div class="item">
-                    <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Instagram&track=<?php echo urlencode(htmlspecialchars($hotel['instagram_link'])); ?>" class="service-item service-card">
-                        <i class="fab fa-instagram"></i>
-                        <p>Follow Us!</p>
-                    </a>
-             
                     <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Dining Menu&track=<?php echo urlencode($link); ?>" class="service-item service-card">
                         <i class="fas fa-concierge-bell"></i>
                         <p>Dining Menu</p>
                     </a>
+                    <?php endif; ?>
                 </div>
 
                 <div class="item">
+                    <?php if (shouldDisplayItem('facebook', $itemVisibility)): ?>
+                    <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Facebook&track=<?php echo urlencode(htmlspecialchars($hotel['facebook_link'])); ?>" class="service-item service-card">
+                        <i class="fab fa-facebook-f"></i>
+                        <p>Like Us</p>
+                    </a>
+                    <?php endif; ?>
+                    
+                    <?php if (shouldDisplayItem('phone', $itemVisibility)): ?>
+                    <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Phone Call&track=<?php echo urlencode('tel:'.htmlspecialchars($hotel['phone'])); ?>" class="service-item service-card">
+                        <i class="fas fa-phone-alt"></i>
+                        <p>Call Us</p>
+                    </a>
+                    <?php endif; ?>
+                </div>
+
+                <div class="item">
+                    <?php if (shouldDisplayItem('instagram', $itemVisibility)): ?>
+                    <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Instagram&track=<?php echo urlencode(htmlspecialchars($hotel['instagram_link'])); ?>" class="service-item service-card">
+                        <i class="fab fa-instagram"></i>
+                        <p>Follow Us!</p>
+                    </a>
+                    <?php endif; ?>
+                    
+                    <?php if (shouldDisplayItem('whatsapp', $itemVisibility)): ?>
+                    <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=WhatsApp&track=<?php echo urlencode('https://wa.me/'.htmlspecialchars($hotel['whatsapp'])); ?>" class="service-item service-card">
+                        <i class="fab fa-whatsapp"></i>
+                        <p>Chat With Us</p>
+                    </a>
+                    <?php endif; ?>
+                </div>
+
+                <div class="item">
+                    <?php if (shouldDisplayItem('local_attractions', $itemVisibility)): ?>
                     <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Local Attractions&track=<?php echo urlencode('places/lucknow_places.php?hotel_id='.$id); ?>" class="service-item service-card">
                         <i class="fas fa-map-signs"></i>
                         <p>Local Attractions</p>
                     </a>
+                    <?php endif; ?>
+                    
+                    <?php if (shouldDisplayItem('find_us', $itemVisibility)): ?>
                     <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Find Us&track=#" class="service-item service-card" aria-disabled="true">
                         <i class="fas fa-map-marker-alt"></i>
                         <p>Find Us</p>
                     </a>
+                    <?php endif; ?>
                 </div>
 
                 <div class="item">
+                    <?php if (shouldDisplayItem('amenities', $itemVisibility)): ?>
                     <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Amenities&track=<?php echo urlencode('amenities/amenities.php?id='.$id); ?>" class="service-item service-card">
                         <i class="fas fa-spa"></i>
                         <p>Amenities</p>
                     </a>
+                    <?php endif; ?>
+                    
+                    <?php if (shouldDisplayItem('tv_channels', $itemVisibility)): ?>
                     <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=TV Channels&track=#" class="service-item service-card">
                         <i class="fas fa-tv"></i>
                         <p>TV Channels</p>
                     </a>
+                    <?php endif; ?>
                 </div>
 
                 <div class="item">
+                    <?php if (shouldDisplayItem('email', $itemVisibility)): ?>
                     <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Email Us&track=<?php echo urlencode('mailto:'.htmlspecialchars($hotel['email'])); ?>" class="service-item service-card">
                         <i class="fas fa-envelope"></i>
                         <p>Email Us</p>
                     </a>
+                    <?php endif; ?>
+                    
+                    <?php if (shouldDisplayItem('offers', $itemVisibility)): ?>
                     <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Offers&track=#" class="service-item service-card">
                         <i class="fas fa-gift"></i>
                         <p>Offers</p>
                     </a>
+                    <?php endif; ?>
                 </div>
 
                 <div class="item">
+                    <?php if (shouldDisplayItem('check_in', $itemVisibility)): ?>
                     <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Check-In&track=#" class="service-item service-card" aria-disabled="true">
                         <i class="fas fa-door-open greenoutline" aria-hidden="true"></i>
                         <p>Check-In</p>
                     </a>
+                    <?php endif; ?>
+                    
+                    <?php if (shouldDisplayItem('wifi', $itemVisibility)): ?>
                     <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=WiFi&track=#" class="service-item service-card" aria-disabled="true">
                         <i class="fas fa-wifi greenoutline" aria-hidden="true"></i>
                         <p>WiFi</p>
                     </a>
+                    <?php endif; ?>
                 </div>
 
                 <div class="item">
+                    <?php if (shouldDisplayItem('pay_us', $itemVisibility)): ?>
                     <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Pay Us&track=#" class="service-item service-card" aria-disabled="true">
                         <i class="fas fa-credit-card greenoutline" aria-hidden="true"></i>
                         <p>Pay Us</p>
                     </a>
+                    <?php endif; ?>
+                    
+                    <?php if (shouldDisplayItem('travel_destinations', $itemVisibility)): ?>
                     <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Travel Destinations&track=#" class="service-item service-card" aria-disabled="true">
                         <i class="fas fa-map-marked-alt greenoutline" aria-hidden="true"></i>
                         <p>Travel Dest</p>
                     </a>
+                    <?php endif; ?>
                 </div>
+                
                 <div class="item">
-                <a href="https://haeavycoding.github.io/compass/" class="service-item service-card">
-    <i class="fas fa-compass"></i>
-    <p>Digital Compass</p>
-</a>
+                    <?php if (shouldDisplayItem('compass', $itemVisibility)): ?>
+                    <a href="https://haeavycoding.github.io/compass/" class="service-item service-card">
+                        <i class="fas fa-compass"></i>
+                        <p>Digital Compass</p>
+                    </a>
+                    <?php endif; ?>
                 </div>
                 <?php
             } ?>

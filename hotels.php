@@ -890,6 +890,10 @@ include 'layouts/header.php';
                                                    title="<?php echo $hotel['landing_page_enabled'] ? 'Disable Landing Page' : 'Enable Landing Page'; ?>">
                                                     <i class="fas fa-power-off"></i> <?php echo $hotel['landing_page_enabled'] ? 'ON' : 'OFF'; ?>
                                                 </a>
+                                                <a href="item-control.php?hotel_id=<?php echo $hotel['id']; ?>"  
+                                                   class="">
+                                                    <i class="fas fa-power-off"></i> Service Control
+                                                </a>
                                             </div>
                                         </td>
                                     </tr>
