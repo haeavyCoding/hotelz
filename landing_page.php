@@ -1,7 +1,45 @@
 <?php
 require_once 'config.php';
-$id = $_GET['id'];
+// Check if ID exists and is valid
+if (!isset($_GET['id'])) {
+    header("Location: sorry.php?reason=invalid_request");
+    exit();
+}
 
+$hotelId = (int)$_GET['id'];
+if ($hotelId <= 0) {
+    header("Location: sorry.php?reason=invalid_id");
+    exit();
+}
+
+// Check if hotel exists and landing page is enabled
+$sql = "SELECT * FROM hotels WHERE id = $hotelId AND landing_page_enabled = 1";
+$result = $conn->query($sql);
+
+if (!$result || $result->num_rows === 0) {
+    header("Location: sorry.php?reason=not_found_or_disabled");
+    exit();
+}
+
+$id = $_GET['id'];
+if (isset($_GET['id'])) {
+    $hotelId = (int)$_GET['id'];
+    $sql = "SELECT * FROM hotels WHERE id = $hotelId AND landing_page_enabled = 1";
+    $result = $conn->query($sql);
+    
+    if ($result && $result->num_rows > 0) {
+        $hotel = $result->fetch_assoc();
+        // Display your landing page content here
+    } else {
+        // Hotel not found or landing page disabled
+        header("HTTP/1.0 404 Not Found");
+        include '404.php'; // Create a custom 404 page
+        die();
+    }
+} else {
+    header("HTTP/1.0 400 Bad Request");
+    die("Invalid request");
+}
 // Increment visit counter first
 $conn->begin_transaction();
 try {
@@ -65,6 +103,7 @@ try {
 } catch (Exception $e) {
     $conn->rollback();
 }
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
