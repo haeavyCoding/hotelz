@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: May 04, 2025 at 03:36 PM
+-- Generation Time: May 05, 2025 at 03:59 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -41,7 +41,7 @@ CREATE TABLE `clients` (
 --
 
 INSERT INTO `clients` (`id`, `hotel_id`, `clients_email`, `password`, `created_at`, `updated_at`) VALUES
-(9, 66, 'info@hotelranbirs.com', '1234', '2025-05-04 13:00:00', '2025-05-04 13:00:00');
+(10, 71, 'lko@gmail.com', '1234', '2025-05-05 14:10:28', '2025-05-05 14:10:28');
 
 -- --------------------------------------------------------
 
@@ -69,16 +69,18 @@ CREATE TABLE `hotels` (
   `website` varchar(255) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT current_timestamp(),
   `visit_count` int(11) DEFAULT 0,
-  `plan_type` int(11) DEFAULT NULL
+  `plan_type` int(11) DEFAULT NULL,
+  `landing_page_enabled` tinyint(1) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `hotels`
 --
 
-INSERT INTO `hotels` (`id`, `hotel_name`, `location`, `description`, `price_range`, `amenities`, `phone`, `whatsapp`, `google_review_link`, `facebook_link`, `instagram_link`, `dining_menu`, `image_url`, `logo_of_hotel`, `google_map_background`, `email`, `website`, `created_at`, `visit_count`, `plan_type`) VALUES
-(66, 'Hotel test', 'Lucknow Durgapuri devi puji pad kamal tumhare', 'this is for test our logo', '7000 - 80000', 'pool,nul,wsiming', '9532829920', '7899654587', 'https://www.google.co.in/map/place/YASH+INFOSYSTEMS/@26.8489028,80.7776979,11z/data=!3m1!4b1!4m6!3m5!1s0x48db959e3537b4c7:0xa98fe84ae1f97761!8m2!3d26.848692!4d80.9425127!16s%2Fg%2F11vxjw3dn8?entry=ttu&g_ep=EgoyMDI1MDQwMi4xIKXMDSoASAFQAw%3D%3D', 'http://localhost/hotelranirsgomtinagar/dashboard.php/', 'https://www.instagrm.com/ranbirshotel/', 'https://www.yashinfosystem.com', 'uploads/6815aac7251a8.jpg', 'uploads/6815aac725736.png', 'uploads/6815aad7e13e4.png', 'info@hotelranbirs.com', 'https://www.hotel.com', '2025-05-02 10:59:04', 40, 3),
-(67, 'Hotel luck', '279/48, Pan Dariba, Kanpur Rd, Mawaiyya, Lucknow, Uttar Pradesh 226004', '', NULL, NULL, '9026023171', '9026023171', 'https://yashinfosystem.com/', 'https://www.facebook.com/HotelRanbir', 'https://yashinfosystem.com/', '', '', '', '', 'info@hotelranbirs.com', 'https://www.hotel.com', '2025-05-02 12:34:05', 7, 1);
+INSERT INTO `hotels` (`id`, `hotel_name`, `location`, `description`, `price_range`, `amenities`, `phone`, `whatsapp`, `google_review_link`, `facebook_link`, `instagram_link`, `dining_menu`, `image_url`, `logo_of_hotel`, `google_map_background`, `email`, `website`, `created_at`, `visit_count`, `plan_type`, `landing_page_enabled`) VALUES
+(69, 'LKO HOTEL', 'Lucknow Durgapuri', '', NULL, NULL, '9532829920', '7899654587', 'https://www.google.co.in/maps/place/YASH+INFOSYSTEMS/@26.8489028,80.7776979,11z/data=!3m1!4b1!4m6!3m5!1s0x48db959e3537b4c7:0xa98fe84ae1f97761!8m2!3d26.848692!4d80.9425127!16s%2Fg%2F11vxjw3dn8?entry=ttu&g_ep=EgoyMDI1MDQwMi4xIKXMDSoASAFQAw%3D%3D', 'https://www.facebook.com/HotelRanbir', 'https://www.instagram.com/ranbirshotel/', '', 'uploads/hotel_image_6818601df18754.72410286.jpg', 'uploads/logo_of_hotel_681860618cfae1.60839210.png', '', 'hotelLko@gmail.com', 'https://www.yashinfotec.in', '2025-05-05 06:52:13', 10, 1, 1),
+(70, 'LKO HOTEL', 'Lucknow Durgapuri', '', '7000 - 8000', 'Pool, Restaurant,swimming', '9532829920', '9026023171', 'https://www.google.co.in/maps/place/YASH+INFOSYSTEMS/@26.8489028,80.7776979,11z/data=!3m1!4b1!4m6!3m5!1s0x48db959e3537b4c7:0xa98fe84ae1f97761!8m2!3d26.848692!4d80.9425127!16s%2Fg%2F11vxjw3dn8?entry=ttu&g_ep=EgoyMDI1MDQwMi4xIKXMDSoASAFQAw%3D%3D', 'https://www.facebook.com/HotelRanbir', 'https://www.instagrm.com/ranbirshotel/', '', 'uploads/hotel_image_6818615d16d423.09295473.jpg', 'uploads/logo_of_hotel_6818615d174db0.54632471.png', '', 'hotelLkeo@gmail.com', 'https://yashinfosystem.com/', '2025-05-05 06:57:33', 8, 2, 1),
+(71, 'LKO HOTEL', 'Lucknow Durgapuri', '', '7000 - 8000', 'Pool, restaurant, Loundry', '9532829920', '9026023171', 'https://www.google.co.in/maps/place/YASH+INFOSYSTEMS/@26.8489028,80.7776979,11z/data=!3m1!4b1!4m6!3m5!1s0x48db959e3537b4c7:0xa98fe84ae1f97761!8m2!3d26.848692!4d80.9425127!16s%2Fg%2F11vxjw3dn8?entry=ttu&g_ep=EgoyMDI1MDQwMi4xIKXMDSoASAFQAw%3D%3D', 'https://www.facebook.com/HotelRanbir', 'https://www.instagrm.com/ranbirshotel/', 'https://www.yashinfosystem.com', 'uploads/hotel_image_6818a3aa1f75d1.26393846.jpg', 'uploads/logo_of_hotel_6818a3aa1fb330.98404733.jpg', '', 'lko@gmail.com', 'https://yashinfosystem.com/', '2025-05-05 07:00:46', 32, 3, 1);
 
 -- --------------------------------------------------------
 
@@ -109,6 +111,57 @@ INSERT INTO `hotel_amenities` (`id`, `hotel_id`, `hotel_amenities`, `is_availabl
 (8, NULL, 'Airport Shuttle', 1, 'On request (charges may apply)'),
 (9, NULL, 'Pet Friendly', 0, 'Pets are not permitted'),
 (10, NULL, 'Conference Hall', 1, 'Up to 100 people capacity');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `item_visibility`
+--
+
+CREATE TABLE `item_visibility` (
+  `id` int(11) NOT NULL,
+  `hotel_id` int(11) NOT NULL,
+  `item_name` varchar(50) NOT NULL,
+  `is_visible` tinyint(1) NOT NULL DEFAULT 1
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `item_visibility`
+--
+
+INSERT INTO `item_visibility` (`id`, `hotel_id`, `item_name`, `is_visible`) VALUES
+(1, 69, 'google_review', 1),
+(2, 69, 'facebook', 1),
+(3, 69, 'instagram', 1),
+(4, 69, 'whatsapp', 1),
+(5, 69, 'phone', 1),
+(6, 69, 'local_attractions', 1),
+(7, 69, 'dining_menu', 1),
+(8, 69, 'amenities', 1),
+(9, 69, 'tv_channels', 1),
+(10, 69, 'email', 0),
+(11, 69, 'offers', 1),
+(12, 69, 'check_in', 1),
+(13, 69, 'wifi', 0),
+(14, 69, 'pay_us', 0),
+(15, 69, 'travel_destinations', 0),
+(16, 69, 'compass', 0),
+(17, 71, 'google_review', 1),
+(18, 71, 'facebook', 1),
+(19, 71, 'instagram', 1),
+(20, 71, 'whatsapp', 1),
+(21, 71, 'phone', 1),
+(22, 71, 'local_attractions', 1),
+(23, 71, 'dining_menu', 1),
+(24, 71, 'amenities', 0),
+(25, 71, 'tv_channels', 0),
+(26, 71, 'email', 0),
+(27, 71, 'offers', 0),
+(28, 71, 'check_in', 0),
+(29, 71, 'wifi', 1),
+(30, 71, 'pay_us', 0),
+(31, 71, 'travel_destinations', 0),
+(32, 71, 'compass', 1);
 
 -- --------------------------------------------------------
 
@@ -167,7 +220,7 @@ INSERT INTO `places` (`id`, `name`, `category`, `sub_category`, `description`) V
 
 CREATE TABLE `reviews` (
   `id` int(11) NOT NULL,
-  `guest_name` varchar(255) NOT NULL DEFAULT 'Guest Name',
+  `guest_name` varchar(255) NOT NULL DEFAULT 'Dear Guest',
   `hotel_id` int(11) NOT NULL,
   `overall_rating` int(11) NOT NULL,
   `rooms_rating` int(11) NOT NULL DEFAULT 0,
@@ -187,8 +240,12 @@ CREATE TABLE `reviews` (
 --
 
 INSERT INTO `reviews` (`id`, `guest_name`, `hotel_id`, `overall_rating`, `rooms_rating`, `service_rating`, `location_rating`, `experience`, `trip_type`, `travel_with`, `hotel_description`, `topics`, `media`, `created_at`) VALUES
-(57, 'Guest Name', 66, 2, 2, 1, 2, 'sdafgsadf dasf fasdasd geda dg', 'Business', 'Solo', 'Quiet, High-tech', '{\"Safety\":\"asdf sad f\",\"Noteworthy details\":\" asd fasddf \",\"Food & drinks\":\" sda fsadf \"}', '../../uploads/reviews/review_6816236db8caf1.17543587.png', '2025-05-03 14:08:45'),
-(58, 'Guest Name', 66, 2, 3, 3, 3, 'asdf fw sad fsdaa fsaddf asddf ', 'Vacation', 'Couple', 'Quiet, Great Value', '{\"Walkability\":\"sdaf sdf \",\"Noteworthy details\":\"asd fsadf \"}', '../../uploads/reviews/review_68171d1ba27431.23890212.png', '2025-05-04 07:54:03');
+(67, 'Dear Guest', 71, 2, 0, 0, 0, '', '', '', NULL, NULL, NULL, '2025-05-05 10:53:15'),
+(68, 'Dear Guest', 71, 2, 0, 0, 0, '', '', '', NULL, NULL, NULL, '2025-05-05 10:54:28'),
+(69, 'Dear Guest', 71, 2, 0, 0, 0, '', '', '', NULL, NULL, 'review_68189913546cf4.11427858.png', '2025-05-05 10:55:15'),
+(70, 'Dear Guest', 71, 2, 0, 0, 0, '', '', '', NULL, NULL, 'review_681899ae4ff222.93547874.png', '2025-05-05 10:57:50'),
+(71, 'Dear Guest', 71, 2, 0, 0, 0, '', '', '', NULL, NULL, 'uploads/reviews/review_681899fa4d2d71.60692615.png', '2025-05-05 10:59:06'),
+(72, 'Dear Guest', 71, 2, 0, 0, 0, '', '', '', NULL, NULL, '../../uploads/reviews/review_6818a0f3bbc4b2.39992363.PNG', '2025-05-05 11:28:51');
 
 -- --------------------------------------------------------
 
@@ -213,17 +270,26 @@ INSERT INTO `service_clicks` (`id`, `hotel_id`, `service_name`, `click_count`, `
 (1, 66, 'Google Review', 8, '2025-05-02 12:05:24', '2025-05-04 06:37:20'),
 (2, 66, 'Facebook', 1, '2025-05-02 12:07:29', '2025-05-02 12:07:29'),
 (3, 66, 'Instagram', 2, '2025-05-02 12:08:08', '2025-05-02 12:08:27'),
-(4, 66, 'Dining Menu', 2, '2025-05-02 12:32:37', '2025-05-03 05:31:06'),
-(5, 66, 'WhatsApp', 1, '2025-05-02 12:32:43', '2025-05-02 12:32:43'),
-(6, 66, 'Phone Call', 1, '2025-05-02 12:32:47', '2025-05-02 12:32:47'),
+(4, 66, 'Dining Menu', 4, '2025-05-02 12:32:37', '2025-05-05 06:01:34'),
+(5, 66, 'WhatsApp', 2, '2025-05-02 12:32:43', '2025-05-05 05:57:19'),
+(6, 66, 'Phone Call', 2, '2025-05-02 12:32:47', '2025-05-05 05:57:34'),
 (7, 66, 'Find Us', 1, '2025-05-02 12:32:54', '2025-05-02 12:32:54'),
 (8, 66, 'Amenities', 2, '2025-05-02 12:32:59', '2025-05-02 13:23:35'),
-(9, 66, 'Local Attractions', 1, '2025-05-02 12:33:06', '2025-05-02 12:33:06'),
+(9, 66, 'Local Attractions', 2, '2025-05-02 12:33:06', '2025-05-05 05:46:09'),
 (10, 67, 'Google Review', 3, '2025-05-02 12:35:04', '2025-05-04 06:37:31'),
 (11, 67, 'WhatsApp', 1, '2025-05-02 12:35:12', '2025-05-02 12:35:12'),
 (12, 67, 'Local Attractions', 1, '2025-05-02 12:35:19', '2025-05-02 12:35:19'),
 (13, 67, 'Phone Call', 1, '2025-05-02 12:35:23', '2025-05-02 12:35:23'),
-(14, 66, 'TV Channels', 2, '2025-05-02 13:23:18', '2025-05-02 13:23:23');
+(14, 66, 'TV Channels', 2, '2025-05-02 13:23:18', '2025-05-02 13:23:23'),
+(15, 68, 'Local Attractions', 1, '2025-05-05 05:48:22', '2025-05-05 05:48:22'),
+(16, 68, 'Places', 1, '2025-05-05 05:48:34', '2025-05-05 05:48:34'),
+(17, 66, 'Travel Destinations', 1, '2025-05-05 06:02:25', '2025-05-05 06:02:25'),
+(18, 69, 'Google Review', 4, '2025-05-05 06:52:42', '2025-05-05 08:38:43'),
+(19, 69, 'WhatsApp', 1, '2025-05-05 06:52:51', '2025-05-05 06:52:51'),
+(20, 69, 'Local Attractions', 2, '2025-05-05 06:52:57', '2025-05-05 08:32:37'),
+(21, 71, 'Google Review', 18, '2025-05-05 07:03:52', '2025-05-05 12:53:09'),
+(22, 71, 'Dining Menu', 1, '2025-05-05 07:08:58', '2025-05-05 07:08:58'),
+(23, 71, 'WhatsApp', 1, '2025-05-05 12:53:02', '2025-05-05 12:53:02');
 
 -- --------------------------------------------------------
 
@@ -334,6 +400,13 @@ ALTER TABLE `hotel_amenities`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indexes for table `item_visibility`
+--
+ALTER TABLE `item_visibility`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `hotel_item` (`hotel_id`,`item_name`);
+
+--
 -- Indexes for table `places`
 --
 ALTER TABLE `places`
@@ -366,19 +439,25 @@ ALTER TABLE `tv_channels`
 -- AUTO_INCREMENT for table `clients`
 --
 ALTER TABLE `clients`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `hotels`
 --
 ALTER TABLE `hotels`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=68;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=72;
 
 --
 -- AUTO_INCREMENT for table `hotel_amenities`
 --
 ALTER TABLE `hotel_amenities`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+
+--
+-- AUTO_INCREMENT for table `item_visibility`
+--
+ALTER TABLE `item_visibility`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
 
 --
 -- AUTO_INCREMENT for table `places`
@@ -390,13 +469,13 @@ ALTER TABLE `places`
 -- AUTO_INCREMENT for table `reviews`
 --
 ALTER TABLE `reviews`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=59;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=73;
 
 --
 -- AUTO_INCREMENT for table `service_clicks`
 --
 ALTER TABLE `service_clicks`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
 
 --
 -- Constraints for dumped tables
