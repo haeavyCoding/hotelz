@@ -135,7 +135,7 @@ include 'layouts/header.php';
         width: 100%;
         max-width: 100%;
         margin: 0 auto;
-        /* padding: 0 15px; */
+        padding: 0 15px;
     }
 
     .page-header {
@@ -218,155 +218,6 @@ include 'layouts/header.php';
         background: var(--primary-color);
     }
 
-    .hotel-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        gap: 1.5rem;
-        margin-bottom: 2.5rem;
-        width: 100%;
-    }
-
-    .hotel-card {
-        background: #fff;
-        border-radius: 15px;
-        overflow: hidden;
-        box-shadow: var(--box-shadow);
-        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        position: relative;
-        width: 100%;
-    }
-
-    .hotel-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
-    }
-
-    .hotel-image {
-        height: 220px;
-        overflow: hidden;
-        position: relative;
-        width: 100%;
-    }
-
-    .hotel-image img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        transition: all 0.6s cubic-bezier(0.215, 0.61, 0.355, 1);
-    }
-
-    .hotel-card:hover .hotel-image img {
-        transform: scale(1.05);
-    }
-
-    .hotel-plan {
-        position: absolute;
-        top: 0.8rem;
-        left: 0.8rem;
-        background: rgba(52, 152, 219, 0.9);
-        color: #fff;
-        padding: 0.3rem 0.8rem;
-        border-radius: 20px;
-        font-size: 0.8rem;
-        z-index: 2;
-        font-weight: 500;
-    }
-
-    .visit-count {
-        position: absolute;
-        bottom: 0.8rem;
-        left: 0.8rem;
-        background: rgba(40, 167, 69, 0.9);
-        color: #fff;
-        padding: 0.3rem 0.8rem;
-        border-radius: 20px;
-        font-size: 0.8rem;
-        z-index: 2;
-        display: flex;
-        align-items: center;
-        font-weight: 500;
-    }
-
-    .visit-count i {
-        margin-right: 0.3rem;
-    }
-
-    .hotel-info {
-        padding: 1.5rem;
-    }
-
-    .hotel-name {
-        font-size: 1.25rem;
-        color: var(--primary-color);
-        margin-bottom: 0.8rem;
-        font-weight: 600;
-        line-height: 1.3;
-    }
-
-    .hotel-location,
-    .hotel-contact {
-        display: flex;
-        align-items: center;
-        margin-bottom: 0.7rem;
-        color: #666;
-        font-size: 0.9rem;
-    }
-
-    .hotel-location i,
-    .hotel-contact i {
-        margin-right: 0.6rem;
-        color: var(--secondary-color);
-        width: 20px;
-        text-align: center;
-        font-size: 0.9rem;
-    }
-
-    .hotel-price {
-        font-size: 1.1rem;
-        color: var(--accent-color);
-        font-weight: 600;
-        margin: 0.8rem 0;
-    }
-
-    .hotel-price span {
-        font-size: 0.8rem;
-        color: #666;
-        font-weight: normal;
-    }
-
-    .hotel-actions {
-        display: flex;
-        gap: 0.5rem;
-        margin-top: 1rem;
-    }
-
-    .view-details-btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        background: var(--secondary-color);
-        color: #fff;
-        padding: 0.7rem;
-        border-radius: 8px;
-        text-decoration: none;
-        transition: all 0.3s;
-        font-weight: 500;
-        border: none;
-        cursor: pointer;
-        width: 100%;
-        font-size: 0.9rem;
-        flex: 1;
-    }
-
-    .view-details-btn:hover {
-        background: var(--primary-color);
-        transform: translateY(-2px);
-    }
-
-    .view-details-btn i {
-        margin-right: 0.5rem;
-    }
-
     /* Table Styles */
     .hotel-table-container {
         width: 100%;
@@ -374,12 +225,11 @@ include 'layouts/header.php';
         margin-bottom: 2rem;
         border-radius: 10px;
         box-shadow: var(--box-shadow);
-        display: none;
     }
 
     .hotel-table {
         width: 100%;
-        min-width: 600px;
+        min-width: 800px;
         background: #fff;
         border-collapse: collapse;
     }
@@ -396,7 +246,7 @@ include 'layouts/header.php';
     }
 
     .hotel-table td {
-        padding: 1rem;
+        padding: 0.8rem 1rem;
         border-bottom: 1px solid #eee;
         vertical-align: middle;
         font-size: 0.9rem;
@@ -410,17 +260,12 @@ include 'layouts/header.php';
         background: rgba(52, 152, 219, 0.05);
     }
 
-    .table-hotel-info {
-        display: flex;
-        align-items: center;
-    }
-
     .table-image {
-        width: 80px;
-        height: 60px;
+        width: 120px;
+        height: 80px;
         border-radius: 8px;
         overflow: hidden;
-        margin-right: 1rem;
+        margin-right: 0.5rem;
         flex-shrink: 0;
     }
 
@@ -430,26 +275,22 @@ include 'layouts/header.php';
         object-fit: cover;
     }
 
-    .table-hotel-details h4 {
+    .table-hotel-name {
         font-weight: 600;
         color: var(--primary-color);
-        margin-bottom: 0.3rem;
-        font-size: 0.95rem;
+        margin-bottom: 0.2rem;
     }
-
-    .table-hotel-details p {
+    
+    .table-hotel-location {
         color: #666;
         font-size: 0.85rem;
         display: flex;
         align-items: center;
-        margin-bottom: 0.2rem;
     }
-
-    .table-hotel-details p i {
+    
+    .table-hotel-location i {
         margin-right: 0.5rem;
         color: var(--secondary-color);
-        width: 16px;
-        text-align: center;
     }
 
     .table-plan-badge {
@@ -460,12 +301,24 @@ include 'layouts/header.php';
         border-radius: 20px;
         font-size: 0.75rem;
         font-weight: 500;
-        margin-top: 0.3rem;
+    }
+    
+    .table-visits {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        font-size: 0.85rem;
+        color: #666;
+    }
+    
+    .table-visits i {
+        color: var(--secondary-color);
     }
 
     .table-actions {
         display: flex;
         gap: 0.5rem;
+        flex-wrap: wrap;
     }
 
     .table-btn {
@@ -474,14 +327,15 @@ include 'layouts/header.php';
         justify-content: center;
         background: var(--secondary-color);
         color: #fff;
-        padding: 0.6rem 1rem;
+        padding: 0.5rem 0.8rem;
         border-radius: 6px;
         text-decoration: none;
-        font-size: 0.85rem;
+        font-size: 0.8rem;
         transition: all 0.3s;
         font-weight: 500;
         border: none;
         cursor: pointer;
+        white-space: nowrap;
     }
 
     .table-btn:hover {
@@ -491,6 +345,16 @@ include 'layouts/header.php';
 
     .table-btn i {
         margin-right: 0.4rem;
+        font-size: 0.7rem;
+    }
+
+    /* Landing Page Toggle Styles */
+    .table-landing-btn.on {
+        background-color: #28a745;
+    }
+    
+    .table-landing-btn.off {
+        background-color: #dc3545;
     }
 
     /* No Hotels Styles */
@@ -500,7 +364,6 @@ include 'layouts/header.php';
         background: #fff;
         border-radius: 15px;
         box-shadow: var(--box-shadow);
-        grid-column: 1 / -1;
         width: 100%;
         margin: 0 auto;
     }
@@ -603,47 +466,25 @@ include 'layouts/header.php';
     }
 
     /* Responsive Adjustments */
-    @media (max-width: 1199px) {
-        .hotel-grid {
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        }
-    }
-
-    @media (max-width: 991px) {
-        .hotel-image {
-            height: 200px;
-        }
-
-        .hotel-info {
-            padding: 1.2rem;
-        }
-    }
-
     @media (max-width: 767px) {
-        .hotel-grid {
-            display: none;
+        .table-image {
+            width: 100px;
+            height: 70px;
         }
-
-        .hotel-table-container {
-            display: block;
+        
+        .hotel-table th, 
+        .hotel-table td {
+            padding: 0.7rem 0.8rem;
         }
-
-        .page-header {
-            padding: 2rem 1rem;
+        
+        .table-actions {
+            flex-direction: column;
+            gap: 0.5rem;
         }
-
-        .search-container {
-            margin: 1.5rem 0;
-        }
-    }
-
-    @media (min-width: 768px) {
-        .hotel-grid {
-            display: grid;
-        }
-
-        .hotel-table-container {
-            display: none;
+        
+        .table-btn {
+            width: 100%;
+            justify-content: flex-start;
         }
     }
 
@@ -666,99 +507,8 @@ include 'layouts/header.php';
             width: 2.2rem;
             height: 2.2rem;
         }
-
-        .table-image {
-            width: 70px;
-            height: 50px;
-        }
-
-        .table-btn {
-            padding: 0.5rem 0.8rem;
-            font-size: 0.8rem;
-        }
-
-        .pagination a,
-        .pagination span {
-            padding: 0.4rem 0.7rem;
-            font-size: 0.85rem;
-            min-width: 36px;
-        }
-    }
-
-    @media (max-width: 400px) {
-        .table-actions {
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .table-btn {
-            width: 100%;
-        }
     }
 </style>
-    <style>
-        /* Previous CSS remains the same, just add these new styles */
-        
-        /* Landing Page Toggle Styles */
-        .landing-toggle-btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0.7rem;
-            border-radius: 8px;
-            text-decoration: none;
-            transition: all 0.3s;
-            font-weight: 500;
-            border: none;
-            cursor: pointer;
-            width: 100%;
-            font-size: 0.9rem;
-            flex: 1;
-            margin-top: 0.5rem;
-        }
-        
-        .landing-toggle-btn.on {
-            background-color: #28a745;
-            color: white;
-        }
-        
-        .landing-toggle-btn.off {
-            background-color: #dc3545;
-            color: white;
-        }
-        
-        .landing-toggle-btn i {
-            margin-right: 0.5rem;
-        }
-        
-        /* Adjust action buttons layout */
-        .hotel-actions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            margin-top: 1rem;
-        }
-        
-        .hotel-actions > a {
-            flex: 1 1 calc(50% - 0.5rem);
-            min-width: 120px;
-        }
-        
-        /* For table view */
-        .table-landing-btn {
-            margin-top: 0.5rem;
-            width: 100%;
-            text-align: center;
-        }
-        
-        .table-landing-btn.on {
-            background-color: #28a745;
-        }
-        
-        .table-landing-btn.off {
-            background-color: #dc3545;
-        }
-    </style>
 </head>
 <body>
     <main class="app-main">
@@ -780,74 +530,18 @@ include 'layouts/header.php';
                         </form>
                     </div>
 
-                    <!-- Grid View -->
-                    <div class="hotel-grid" id="gridView">
-                        <?php if ($result->num_rows > 0):
-                            while($hotel = $result->fetch_assoc()):
-                        ?>
-                            <div class="hotel-card">
-                                <div class="hotel-image">
-                                    <?php if (!empty($hotel['image_url'])) { ?>
-                                        <img src="<?php echo $hotel['image_url']; ?>" alt="<?php echo htmlspecialchars($hotel['hotel_name']); ?>">
-                                    <?php } else { ?>
-                                        <div style="width:100%;height:100%;background:#eee;display:flex;align-items:center;justify-content:center;">
-                                            <i class="fas fa-hotel" style="font-size:2rem;color:#ccc;"></i>
-                                        </div>
-                                    <?php } ?>
-                                    <div class="hotel-plan">
-                                        <?php echo getPlanType($hotel['plan_type']); ?>
-                                    </div>
-                                    <div class="visit-count">
-                                        <i class="fas fa-eye"></i>
-                                        <?php echo htmlspecialchars($hotel['visit_count']); ?>
-                                    </div>
-                                </div>
-                                <div class="hotel-info">
-                                    <h2 class="hotel-name"><?php echo htmlspecialchars($hotel['hotel_name']); ?></h2>
-                                    <p class="hotel-location">
-                                        <i class="fas fa-map-marker-alt"></i>
-                                        <?php echo htmlspecialchars($hotel['location']); ?>
-                                    </p>
-                                    <p class="hotel-contact">
-                                        <i class="fas fa-phone"></i>
-                                        <?php echo htmlspecialchars($hotel['phone']); ?>
-                                    </p>
-                                    <div class="hotel-price">
-                                        ₹<?php echo htmlspecialchars($hotel['price_range']); ?> <span>/ night</span>
-                                    </div>
-                                    <div class="hotel-actions">
-                                        <a href="hotel_details.php?id=<?php echo $hotel['id']; ?>" class="view-details-btn">
-                                            <i class="fas fa-eye"></i> View
-                                        </a>
-                                        <a href="landing_page.php?id=<?php echo $hotel['id']; ?>" class="view-details-btn">
-                                            <i class="fas fa-external-link-alt"></i> Landing
-                                        </a>
-                                        <a href="?toggle_landing=1&id=<?php echo $hotel['id']; ?>&page=<?php echo $page; ?>&search=<?php echo urlencode($search); ?>" 
-   class="landing-toggle-btn <?php echo $hotel['landing_page_enabled'] ? 'on' : 'off'; ?>"
-   title="<?php echo $hotel['landing_page_enabled'] ? 'Disable Landing Page' : 'Enable Landing Page'; ?>">
-    <i class="fas fa-power-off"></i> <?php echo $hotel['landing_page_enabled'] ? 'Enabled' : 'Disabled'; ?>
-</a>
-                                    </div>
-                                </div>
-                            </div>
-                        <?php endwhile; else: ?>
-                            <div class="no-hotels">
-                                <div class="no-hotels-icon">
-                                    <i class="fas fa-hotel"></i>
-                                </div>
-                                <h3>No Hotels Available</h3>
-                                <p>We're currently updating our hotel collection. Please check back later for our premium selections.</p>
-                                <a href="hotels.php" class="explore-btn">Reset Search</a>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-
                     <!-- Table View -->
                     <div class="hotel-table-container">
                         <table class="hotel-table" id="tableView">
                             <thead>
                                 <tr>
-                                    <th>Hotel Information</th>
+                                    <th>Image</th>
+                                    <th>Hotel Name</th>
+                                    <th>Location</th>
+                                    <th>Contact</th>
+                                    <th>Plan</th>
+                                    <th>Visits</th>
+                                    <th>Landing Page</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -857,25 +551,39 @@ include 'layouts/header.php';
                                     while($hotel = $result->fetch_assoc()): ?>
                                     <tr>
                                         <td>
-                                            <div class="table-hotel-info">
-                                                <div class="table-image">
-                                                    <?php if (!empty($hotel['image_url'])) { ?>
-                                                        <img src="<?php echo $hotel['image_url']; ?>" alt="<?php echo htmlspecialchars($hotel['hotel_name']); ?>">
-                                                    <?php } else { ?>
-                                                        <div style="width:100%;height:100%;background:#eee;display:flex;align-items:center;justify-content:center;">
-                                                            <i class="fas fa-hotel" style="font-size:1.5rem;color:#ccc;"></i>
-                                                        </div>
-                                                    <?php } ?>
-                                                </div>
-                                                <div class="table-hotel-details">
-                                                    <h4><?php echo htmlspecialchars($hotel['hotel_name']); ?></h4>
-                                                    <p><i class="fas fa-map-marker-alt"></i> <?php echo htmlspecialchars($hotel['location']); ?></p>
-                                                    <p><i class="fas fa-phone"></i> <?php echo htmlspecialchars($hotel['phone']); ?></p>
-                                                    <p><i class="fas fa-rupee-sign"></i> ₹<?php echo htmlspecialchars($hotel['price_range']); ?> per night</p>
-                                                    <span class="table-plan-badge"><?php echo getPlanType($hotel['plan_type']); ?></span>
-                                                    <p style="margin-top:0.5rem;"><i class="fas fa-eye"></i> <?php echo htmlspecialchars($hotel['visit_count']); ?> views</p>
-                                                </div>
+                                            <div class="table-image">
+                                                <?php if (!empty($hotel['image_url'])) { ?>
+                                                    <img src="<?php echo $hotel['image_url']; ?>" alt="<?php echo htmlspecialchars($hotel['hotel_name']); ?>">
+                                                <?php } else { ?>
+                                                    <div style="width:100%;height:100%;background:#eee;display:flex;align-items:center;justify-content:center;">
+                                                        <i class="fas fa-hotel" style="font-size:1.5rem;color:#ccc;"></i>
+                                                    </div>
+                                                <?php } ?>
                                             </div>
+                                        </td>
+                                        <td>
+                                            <div class="table-hotel-name"><?php echo htmlspecialchars($hotel['hotel_name']); ?></div>
+                                        </td>
+                                        <td>
+                                            <div class="table-hotel-location">
+                                                <i class="fas fa-map-marker-alt"></i>
+                                                <?php echo htmlspecialchars($hotel['location']); ?>
+                                            </div>
+                                        </td>
+                                        <td><?php echo htmlspecialchars($hotel['phone']); ?></td>
+                                        <td><span class="table-plan-badge"><?php echo getPlanType($hotel['plan_type']); ?></span></td>
+                                        <td>
+                                            <div class="table-visits">
+                                                <i class="fas fa-eye"></i>
+                                                <?php echo htmlspecialchars($hotel['visit_count']); ?>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <a href="?toggle_landing=1&id=<?php echo $hotel['id']; ?>&page=<?php echo $page; ?>&search=<?php echo urlencode($search); ?>" 
+                                               class="table-btn table-landing-btn <?php echo $hotel['landing_page_enabled'] ? 'on' : 'off'; ?>"
+                                               title="<?php echo $hotel['landing_page_enabled'] ? 'Disable Landing Page' : 'Enable Landing Page'; ?>">
+                                                <i class="fas fa-power-off"></i> <?php echo $hotel['landing_page_enabled'] ? 'ON' : 'OFF'; ?>
+                                            </a>
                                         </td>
                                         <td>
                                             <div class="table-actions">
@@ -885,21 +593,16 @@ include 'layouts/header.php';
                                                 <a href="landing_page.php?id=<?php echo $hotel['id']; ?>" class="table-btn">
                                                     <i class="fas fa-external-link-alt"></i> Landing
                                                 </a>
-                                                <a href="?toggle_landing=1&id=<?php echo $hotel['id']; ?>&page=<?php echo $page; ?>&search=<?php echo urlencode($search); ?>" 
-                                                   class="table-btn table-landing-btn <?php echo $hotel['landing_page_enabled'] ? 'on' : 'off'; ?>"
-                                                   title="<?php echo $hotel['landing_page_enabled'] ? 'Disable Landing Page' : 'Enable Landing Page'; ?>">
-                                                    <i class="fas fa-power-off"></i> <?php echo $hotel['landing_page_enabled'] ? 'ON' : 'OFF'; ?>
-                                                </a>
-                                                <a href="item-control.php?hotel_id=<?php echo $hotel['id']; ?>"  
-                                                   class="">
-                                                    <i class="fas fa-power-off"></i> Service Control
-                                                </a>
+                                                <a href="item-control.php?hotel_id=<?php echo $hotel['id']; ?>" class="table-btn">
+    <i class="fas fa-tools"></i> Control Services
+</a>
+
                                             </div>
                                         </td>
                                     </tr>
                                 <?php endwhile; else: ?>
                                     <tr>
-                                        <td colspan="2">
+                                        <td colspan="8">
                                             <div class="no-hotels" style="text-align:center;padding:2rem;width:100%;">
                                                 <div class="no-hotels-icon">
                                                     <i class="fas fa-hotel"></i>
@@ -970,7 +673,7 @@ include 'layouts/header.php';
         toggleButtons.forEach(button => {
             button.addEventListener('click', function(e) {
                 const isEnabled = this.classList.contains('on');
-                const hotelName = this.closest('.hotel-card,.table-hotel-info').querySelector('.hotel-name,h4').textContent;
+                const hotelName = this.closest('tr').querySelector('.table-hotel-name').textContent;
                 
                 if (!confirm(`Are you sure you want to ${isEnabled ? 'disable' : 'enable'} the landing page for "${hotelName}"?`)) {
                     e.preventDefault();
