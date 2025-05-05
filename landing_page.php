@@ -628,14 +628,15 @@ try {
                 </div>
 
                 <div class="item">
+                <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Phone Call&track=<?php echo urlencode('tel:'.htmlspecialchars($hotel['phone'])); ?>" class="service-item service-card">
+                        <i class="fas fa-phone-alt"></i>
+                        <p>Call Us</p>
+                    </a>
                     <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Local Attractions&track=<?php echo urlencode('places/lucknow_places.php?hotel_id='.$id); ?>" class="service-item service-card">
                         <i class="fas fa-map-signs"></i>
                         <p>Local Attractions</p>
                     </a>
-                    <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Phone Call&track=<?php echo urlencode('tel:'.htmlspecialchars($hotel['phone'])); ?>" class="service-item service-card">
-                        <i class="fas fa-phone-alt"></i>
-                        <p>Call Us</p>
-                    </a>
+                   
                 </div>
 
                 <div class="item">
@@ -662,10 +663,11 @@ try {
                         <i class="fas fa-tv"></i>
                         <p>TV Channels</p>
                     </a>
-                    <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Places&track=<?php echo urlencode('places/lucknow_places.php?hotel_id='.$id); ?>" class="service-item service-card">
-                        <i class="fas fa-map-marked-alt"></i>
-                        <p>Places</p>
-                    </a>
+                    <a href="https://haeavycoding.github.io/compass/" class="service-item service-card">
+    <i class="fas fa-compass"></i>
+    <p>Digital Compass</p>
+</a>
+
                 </div>
                 <?php
             }
@@ -686,9 +688,9 @@ try {
                         $link = "dining_menu/dining_menu.php?id=" . $hotel["id"];
                     }
                     ?>
-                    <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Dining Menu&track=<?php echo urlencode($link); ?>" class="service-item service-card">
-                        <i class="fas fa-concierge-bell"></i>
-                        <p>Dining Menu</p>
+                  <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=WhatsApp&track=<?php echo urlencode('https://wa.me/'.htmlspecialchars($hotel['whatsapp'])); ?>" class="service-item service-card">
+                        <i class="fab fa-whatsapp"></i>
+                        <p>Chat With Us</p>
                     </a>
                 </div>
 
@@ -697,9 +699,9 @@ try {
                         <i class="fab fa-facebook-f"></i>
                         <p>Like Us</p>
                     </a>
-                    <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=WhatsApp&track=<?php echo urlencode('https://wa.me/'.htmlspecialchars($hotel['whatsapp'])); ?>" class="service-item service-card">
-                        <i class="fab fa-whatsapp"></i>
-                        <p>Chat With Us</p>
+                    <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Phone Call&track=<?php echo urlencode('tel:'.htmlspecialchars($hotel['phone'])); ?>" class="service-item service-card">
+                        <i class="fas fa-phone-alt"></i>
+                        <p>Call Us</p>
                     </a>
                 </div>
 
@@ -708,9 +710,10 @@ try {
                         <i class="fab fa-instagram"></i>
                         <p>Follow Us!</p>
                     </a>
-                    <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Phone Call&track=<?php echo urlencode('tel:'.htmlspecialchars($hotel['phone'])); ?>" class="service-item service-card">
-                        <i class="fas fa-phone-alt"></i>
-                        <p>Call Us</p>
+             
+                    <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Dining Menu&track=<?php echo urlencode($link); ?>" class="service-item service-card">
+                        <i class="fas fa-concierge-bell"></i>
+                        <p>Dining Menu</p>
                     </a>
                 </div>
 
@@ -767,6 +770,12 @@ try {
                         <i class="fas fa-map-marked-alt greenoutline" aria-hidden="true"></i>
                         <p>Travel Dest</p>
                     </a>
+                </div>
+                <div class="item">
+                <a href="https://haeavycoding.github.io/compass/" class="service-item service-card">
+    <i class="fas fa-compass"></i>
+    <p>Digital Compass</p>
+</a>
                 </div>
                 <?php
             } ?>
