@@ -1,8 +1,8 @@
 <?php
 require_once 'config.php';
+session_start(); // Make sure this is enabled
 
-// Check if user is admin (you should implement proper authentication)
-// session_start();
+// Check if user is admin (authentication should be handled properly in production)
 // if (!isset($_SESSION['admin_logged_in'])) {
 //     header("Location: admin-login.php");
 //     exit();
@@ -48,37 +48,45 @@ $allItems = [
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     foreach ($allItems as $item => $name) {
         $isVisible = isset($_POST[$item]) ? 1 : 0;
-        
+
         // Check if record exists
         $checkSql = "SELECT id FROM item_visibility WHERE hotel_id = $hotelId AND item_name = '$item'";
         $checkResult = $conn->query($checkSql);
-        
+
         if ($checkResult->num_rows > 0) {
-            // Update existing record
             $updateSql = "UPDATE item_visibility SET is_visible = $isVisible WHERE hotel_id = $hotelId AND item_name = '$item'";
             $conn->query($updateSql);
         } else {
-            // Insert new record
             $insertSql = "INSERT INTO item_visibility (hotel_id, item_name, is_visible) VALUES ($hotelId, '$item', $isVisible)";
             $conn->query($insertSql);
         }
     }
-    
+
     $_SESSION['message'] = "Item visibility updated successfully!";
     header("Location: item-control.php?hotel_id=$hotelId");
     exit();
 }
-include_once"layouts/header.php";
-?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
+include_once "layouts/header.php";
+?>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Item Visibility Control</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .card {
+            border: none;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease;
+            border-radius: 15px;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
         .toggle-btn {
             position: relative;
             display: inline-block;
@@ -97,8 +105,8 @@ include_once"layouts/header.php";
             left: 0;
             right: 0;
             bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
+            background-color: #ced4da;
+            transition: 0.4s;
             border-radius: 34px;
         }
         .slider:before {
@@ -109,49 +117,62 @@ include_once"layouts/header.php";
             left: 4px;
             bottom: 4px;
             background-color: white;
-            transition: .4s;
+            transition: 0.4s;
             border-radius: 50%;
         }
         input:checked + .slider {
-            background-color: #28a745;
+            background-color: #198754;
         }
         input:checked + .slider:before {
             transform: translateX(30px);
         }
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+        }
+        .btn {
+            border-radius: 8px;
+        }
+        h2 {
+            font-weight: 700;
+            color: #343a40;
+        }
     </style>
-</head>
-<body>
-    <div class="container mt-5">
-        <h2 class="mb-4">Item Visibility Control</h2>
-        
-        <?php if (isset($_SESSION['message'])): ?>
-            <div class="alert alert-success"><?php echo $_SESSION['message']; unset($_SESSION['message']); ?></div>
-        <?php endif; ?>
-        
-        <form method="POST">
-            <div class="row">
-                <?php foreach ($allItems as $item => $name): ?>
-                    <div class="col-md-4 mb-3">
-                        <div class="card">
-                            <div class="card-body d-flex justify-content-between align-items-center">
-                                <h5 class="card-title mb-0"><?php echo $name; ?></h5>
-                                <label class="toggle-btn">
-                                    <input type="checkbox" name="<?php echo $item; ?>" 
-                                        <?php echo (isset($currentStatuses[$item]) && $currentStatuses[$item]) ? 'checked' : ''; ?>>
-                                    <span class="slider"></span>
-                                </label>
-                            </div>
+<main class="app-main">
+<div class="container mt-5">
+    <h2 class="mb-4 text-center">🛠️ Manage Visible Items for This Hotel</h2>
+
+    <?php if (isset($_SESSION['message'])): ?>
+        <div class="alert alert-success text-center"><?php echo $_SESSION['message']; unset($_SESSION['message']); ?></div>
+    <?php endif; ?>
+
+    <form method="POST">
+        <div class="row g-4">
+            <?php foreach ($allItems as $item => $name): ?>
+                <div class="col-sm-6 col-md-4">
+                    <div class="card p-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0"><?php echo $name; ?></h5>
+                            <label class="toggle-btn mb-0">
+                                <input type="checkbox" name="<?php echo $item; ?>" 
+                                    <?php echo (isset($currentStatuses[$item]) && $currentStatuses[$item]) ? 'checked' : ''; ?>>
+                                <span class="slider"></span>
+                            </label>
                         </div>
                     </div>
-                <?php endforeach; ?>
-            </div>
-            
-            <button type="submit" class="btn btn-primary mt-3">Save Changes</button>
-            <a href="landing_page.php?id=<?php echo $hotelId; ?>" class="btn btn-secondary mt-3">Back to Landing Page</a>
-        </form>
-    </div>
-    
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+                </div>
+            <?php endforeach; ?>
+        </div>
+
+        <div class="text-center mt-4">
+            <button type="submit" class="btn btn-success px-4">💾 Save Changes</button>
+            <a href="landing_page.php?id=<?php echo $hotelId; ?>" class="btn btn-outline-secondary px-4 ms-2">🔙 Back</a>
+        </div>
+    </form>
+</div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+
 <?php include_once "layouts/footer.php"; ?>
