@@ -1,12 +1,12 @@
 <?php
 require_once 'config.php';
-session_start(); // Make sure this is enabled
+session_start();
 
-// Check if user is admin (authentication should be handled properly in production)
-// if (!isset($_SESSION['admin_logged_in'])) {
-//     header("Location: admin-login.php");
-//     exit();
-// }
+// Check if user is logged in
+if (!isset($_SESSION['user'])) {
+    header('Location: auth_system/login.php');
+    exit();
+}
 
 // Get hotel ID from URL
 if (!isset($_GET['hotel_id'])) {
@@ -14,17 +14,17 @@ if (!isset($_GET['hotel_id'])) {
 }
 $hotelId = (int)$_GET['hotel_id'];
 
-// Fetch current item statuses
-$sql = "SELECT * FROM item_visibility WHERE hotel_id = $hotelId";
-$result = $conn->query($sql);
-$currentStatuses = [];
-if ($result->num_rows > 0) {
-    while ($row = $result->fetch_assoc()) {
-        $currentStatuses[$row['item_name']] = $row['is_visible'];
-    }
+// Fetch hotel plan_type
+$planSql = "SELECT plan_type FROM hotels WHERE id = $hotelId";
+$planResult = $conn->query($planSql);
+$planType = 1; // Default to basic
+
+if ($planResult && $planResult->num_rows > 0) {
+    $row = $planResult->fetch_assoc();
+    $planType = (int)$row['plan_type'];
 }
 
-// Default items with their display names
+// All possible items with display names
 $allItems = [
     'google_review' => 'Google Review',
     'facebook' => 'Facebook',
@@ -44,9 +44,38 @@ $allItems = [
     'compass' => 'Digital Compass'
 ];
 
+// Allowed items per plan_type
+$planItems = [
+    1 => ['google_review', 'facebook', 'instagram', 'whatsapp', 'phone', 'local_attractions'], // Basic
+    2 => ['google_review', 'facebook', 'instagram', 'whatsapp', 'phone', 'local_attractions', 
+          'dining_menu', 'amenities', 'tv_channels', 'compass'], // Advance
+    3 => array_keys($allItems) // Premium (all items)
+];
+
+$allowedItems = $planItems[$planType] ?? [];
+
+// Fetch current item statuses
+$sql = "SELECT * FROM item_visibility WHERE hotel_id = $hotelId";
+$result = $conn->query($sql);
+$currentStatuses = [];
+if ($result->num_rows > 0) {
+    while ($row = $result->fetch_assoc()) {
+        $currentStatuses[$row['item_name']] = $row['is_visible'];
+    }
+}
+
+// For items that are allowed by plan but not in database, consider them as ON (1)
+foreach ($allowedItems as $item) {
+    if (!isset($currentStatuses[$item])) {
+        $currentStatuses[$item] = 1; // Default to ON for plan items
+    }
+}
+
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     foreach ($allItems as $item => $name) {
+        if (!in_array($item, $allowedItems)) continue;
+
         $isVisible = isset($_POST[$item]) ? 1 : 0;
 
         // Check if record exists
@@ -69,76 +98,81 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 include_once "layouts/header.php";
 ?>
-    <meta charset="UTF-8">
-    <title>Item Visibility Control</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: #f8f9fa;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        .card {
-            border: none;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
-            transition: transform 0.3s ease;
-            border-radius: 15px;
-        }
-        .card:hover {
-            transform: translateY(-5px);
-        }
-        .toggle-btn {
-            position: relative;
-            display: inline-block;
-            width: 60px;
-            height: 30px;
-        }
-        .toggle-btn input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ced4da;
-            transition: 0.4s;
-            border-radius: 34px;
-        }
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 22px;
-            width: 22px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: 0.4s;
-            border-radius: 50%;
-        }
-        input:checked + .slider {
-            background-color: #198754;
-        }
-        input:checked + .slider:before {
-            transform: translateX(30px);
-        }
-        .card-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #333;
-        }
-        .btn {
-            border-radius: 8px;
-        }
-        h2 {
-            font-weight: 700;
-            color: #343a40;
-        }
-    </style>
+
+<!-- Rest of your HTML/CSS remains the same -->
+
+<meta charset="UTF-8">
+<title>Item Visibility Control</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<style>
+    body {
+        background-color: #f8f9fa;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .card {
+        border: none;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+        transition: transform 0.3s ease;
+        border-radius: 15px;
+    }
+    .card:hover {
+        transform: translateY(-5px);
+    }
+    .toggle-btn {
+        position: relative;
+        display: inline-block;
+        width: 60px;
+        height: 30px;
+    }
+    .toggle-btn input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ced4da;
+        transition: 0.4s;
+        border-radius: 34px;
+    }
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 22px;
+        width: 22px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: 0.4s;
+        border-radius: 50%;
+    }
+    input:checked + .slider {
+        background-color: #198754;
+    }
+    input:checked + .slider:before {
+        transform: translateX(30px);
+    }
+    .card-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #333;
+    }
+    .btn {
+        border-radius: 8px;
+    }
+    h2 {
+        font-weight: 700;
+        color: #343a40;
+    }
+</style>
+
 <main class="app-main">
 <div class="container mt-5">
     <h2 class="mb-4 text-center">🛠️ Manage Visible Items for This Hotel</h2>
@@ -150,18 +184,20 @@ include_once "layouts/header.php";
     <form method="POST">
         <div class="row g-4">
             <?php foreach ($allItems as $item => $name): ?>
-                <div class="col-sm-6 col-md-4">
-                    <div class="card p-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="card-title mb-0"><?php echo $name; ?></h5>
-                            <label class="toggle-btn mb-0">
-                                <input type="checkbox" name="<?php echo $item; ?>" 
-                                    <?php echo (isset($currentStatuses[$item]) && $currentStatuses[$item]) ? 'checked' : ''; ?>>
-                                <span class="slider"></span>
-                            </label>
+                <?php if (in_array($item, $allowedItems)): ?>
+                    <div class="col-sm-6 col-md-4">
+                        <div class="card p-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="card-title mb-0"><?php echo $name; ?></h5>
+                                <label class="toggle-btn mb-0">
+                                    <input type="checkbox" name="<?php echo $item; ?>" 
+                                        <?php echo (isset($currentStatuses[$item]) && $currentStatuses[$item]) ? 'checked' : ''; ?>>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
                         </div>
                     </div>
-                </div>
+                <?php endif; ?>
             <?php endforeach; ?>
         </div>
 

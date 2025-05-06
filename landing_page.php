@@ -54,8 +54,8 @@ if ($visibilityResult->num_rows > 0) {
 
 // Function to check if item should be displayed
 function shouldDisplayItem($itemName, $itemVisibility) {
-    // If no record exists, default to visible
-    return !isset($itemVisibility[$itemName]) || $itemVisibility[$itemName];
+    // If no record exists or is_visible is true, display the item
+    return !isset($itemVisibility[$itemName]) || (bool)$itemVisibility[$itemName];
 }
 
 // Increment visit counter first
@@ -122,6 +122,151 @@ try {
     $conn->rollback();
 }
 
+// Prepare visible items based on plan type and visibility settings
+$visibleItems = [];
+$planType = $hotel['plan_type'];
+
+// Common items for all plans
+if (shouldDisplayItem('google_review', $itemVisibility)) {
+    $link = ($planType == 1) ? htmlspecialchars($hotel['google_review_link']) : "google_review/index.php?id=".$hotel['id'];
+    $visibleItems[] = [
+        'icon' => 'fab fa-google',
+        'text' => 'Review Us',
+        'link' => "track_service.php?hotel_id=$id&service=Google Review&track=".urlencode($link)
+    ];
+}
+
+if (shouldDisplayItem('instagram', $itemVisibility)) {
+    $visibleItems[] = [
+        'icon' => 'fab fa-instagram',
+        'text' => 'Follow Us!',
+        'link' => "track_service.php?hotel_id=$id&service=Instagram&track=".urlencode(htmlspecialchars($hotel['instagram_link']))
+    ];
+}
+
+if (shouldDisplayItem('facebook', $itemVisibility)) {
+    $visibleItems[] = [
+        'icon' => 'fab fa-facebook-f',
+        'text' => 'Like Us',
+        'link' => "track_service.php?hotel_id=$id&service=Facebook&track=".urlencode(htmlspecialchars($hotel['facebook_link']))
+    ];
+}
+
+if (shouldDisplayItem('whatsapp', $itemVisibility)) {
+    $visibleItems[] = [
+        'icon' => 'fab fa-whatsapp',
+        'text' => 'Chat With Us',
+        'link' => "track_service.php?hotel_id=$id&service=WhatsApp&track=".urlencode('https://wa.me/'.htmlspecialchars($hotel['whatsapp']))
+    ];
+}
+
+if (shouldDisplayItem('phone', $itemVisibility)) {
+    $visibleItems[] = [
+        'icon' => 'fas fa-phone-alt',
+        'text' => 'Call Us',
+        'link' => "track_service.php?hotel_id=$id&service=Phone Call&track=".urlencode('tel:'.htmlspecialchars($hotel['phone']))
+    ];
+}
+
+if (shouldDisplayItem('local_attractions', $itemVisibility)) {
+    $visibleItems[] = [
+        'icon' => 'fas fa-map-signs',
+        'text' => 'Local Attractions',
+        'link' => "track_service.php?hotel_id=$id&service=Local Attractions&track=".urlencode('places/lucknow_places.php?hotel_id='.$id)
+    ];
+}
+
+// Advanced and Premium plan items
+if ($planType >= 2) {
+    if (shouldDisplayItem('dining_menu', $itemVisibility)) {
+        $diningMenu = $hotel['dining_menu'];
+        $link = filter_var($diningMenu, FILTER_VALIDATE_URL) ? htmlspecialchars($diningMenu) : "dining_menu/dining_menu.php?id=".$hotel["id"];
+        $visibleItems[] = [
+            'icon' => 'fas fa-concierge-bell',
+            'text' => 'Dining Menu',
+            'link' => "track_service.php?hotel_id=$id&service=Dining Menu&track=".urlencode($link)
+        ];
+    }
+
+    if (shouldDisplayItem('amenities', $itemVisibility)) {
+        $visibleItems[] = [
+            'icon' => 'fas fa-spa',
+            'text' => 'Amenities',
+            'link' => "track_service.php?hotel_id=$id&service=Amenities&track=".urlencode('amenities/amenities.php?id='.$id)
+        ];
+    }
+
+    if (shouldDisplayItem('tv_channels', $itemVisibility)) {
+        $visibleItems[] = [
+            'icon' => 'fas fa-tv',
+            'text' => 'TV Channels',
+            'link' => "track_service.php?hotel_id=$id&service=TV Channels&track=#"
+        ];
+    }
+
+    if (shouldDisplayItem('compass', $itemVisibility)) {
+        $visibleItems[] = [
+            'icon' => 'fas fa-compass',
+            'text' => 'Digital Compass',
+            'link' => "https://haeavycoding.github.io/compass/"
+        ];
+    }
+}
+
+// Premium plan only items
+if ($planType == 3) {
+    if (shouldDisplayItem('email', $itemVisibility)) {
+        $visibleItems[] = [
+            'icon' => 'fas fa-envelope',
+            'text' => 'Email Us',
+            'link' => "track_service.php?hotel_id=$id&service=Email Us&track=".urlencode('mailto:'.htmlspecialchars($hotel['email']))
+        ];
+    }
+
+    if (shouldDisplayItem('offers', $itemVisibility)) {
+        $visibleItems[] = [
+            'icon' => 'fas fa-gift',
+            'text' => 'Offers',
+            'link' => "track_service.php?hotel_id=$id&service=Offers&track=#"
+        ];
+    }
+
+    if (shouldDisplayItem('check_in', $itemVisibility)) {
+        $visibleItems[] = [
+            'icon' => 'fas fa-door-open',
+            'text' => 'Check-In',
+            'link' => "track_service.php?hotel_id=$id&service=Check-In&track=#"
+        ];
+    }
+
+    if (shouldDisplayItem('wifi', $itemVisibility)) {
+        $visibleItems[] = [
+            'icon' => 'fas fa-wifi',
+            'text' => 'WiFi',
+            'link' => "track_service.php?hotel_id=$id&service=WiFi&track=#"
+        ];
+    }
+
+    if (shouldDisplayItem('pay_us', $itemVisibility)) {
+        $visibleItems[] = [
+            'icon' => 'fas fa-credit-card',
+            'text' => 'Pay Us',
+            'link' => "track_service.php?hotel_id=$id&service=Pay Us&track=#"
+        ];
+    }
+
+    if (shouldDisplayItem('travel_destinations', $itemVisibility)) {
+        $visibleItems[] = [
+            'icon' => 'fas fa-map-marked-alt',
+            'text' => 'Travel Dest',
+            'link' => "track_service.php?hotel_id=$id&service=Travel Destinations&track=#"
+        ];
+    }
+}
+
+// Group items into pairs for the carousel
+$groupedItems = array_chunk($visibleItems, 2);
+$carouselClass = (count($groupedItems) > 1) ? 'multi-item' : 'single-item-carousel';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -435,6 +580,17 @@ try {
             text-decoration: none;
         }
 
+        /* Single item carousel styles */
+        .single-item-carousel .owl-stage {
+            display: flex;
+            justify-content: center;
+        }
+
+        /* Hide dots when only one item */
+        .owl-carousel:not(.multi-item) .owl-dots {
+            display: none !important;
+        }
+
         /* Responsive Adjustments */
         @media (max-width: 992px) {
             .background-image {
@@ -457,8 +613,8 @@ try {
                 height: 80vh;
             }
             .owl-nav {
-            display: none
-        }
+                display: none
+            }
 
             .service-item p {
                 font-size: 15px !important;
@@ -500,13 +656,11 @@ try {
                 font-size: 12px;
             }
             .navbar img {
-            width: 100px;
-            height: 60px;
-            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-            object-fit: contain;
-        }
-
-          
+                width: 100px;
+                height: 60px;
+                filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+                object-fit: contain;
+            }
         }
 
         @media (max-width: 576px) {
@@ -616,306 +770,17 @@ try {
     </div>
 
     <div class="services-container">
-        <div class="owl-carousel owl-theme">
-            <?php
-            $planType = $hotel['plan_type'];
-
-            // Basic Plan (1)
-            if ($planType == 1) {
-                ?>
-                <!-- Basic Plan Services -->
+        <div class="owl-carousel owl-theme <?php echo $carouselClass; ?>">
+            <?php foreach ($groupedItems as $itemGroup): ?>
                 <div class="item">
-                    <?php if (shouldDisplayItem('google_review', $itemVisibility)): ?>
-                    <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Google Review&track=<?php echo urlencode(htmlspecialchars($hotel['google_review_link'])); ?>" class="service-item service-card">
-                        <i class="fab fa-google"></i>
-                        <p>Review Us</p>
-                    </a>
-                    <?php endif; ?>
-                    
-                    <?php if (shouldDisplayItem('instagram', $itemVisibility)): ?>
-                    <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Instagram&track=<?php echo urlencode(htmlspecialchars($hotel['instagram_link'])); ?>" class="service-item service-card">
-                        <i class="fab fa-instagram"></i>
-                        <p>Follow Us!</p>
-                    </a>
-                    <?php endif; ?>
+                    <?php foreach ($itemGroup as $item): ?>
+                        <a href="<?php echo $item['link']; ?>" class="service-item service-card">
+                            <i class="<?php echo $item['icon']; ?>"></i>
+                            <p><?php echo $item['text']; ?></p>
+                        </a>
+                    <?php endforeach; ?>
                 </div>
-
-                <div class="item">
-                    <?php if (shouldDisplayItem('facebook', $itemVisibility)): ?>
-                    <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Facebook&track=<?php echo urlencode(htmlspecialchars($hotel['facebook_link'])); ?>" class="service-item service-card">
-                        <i class="fab fa-facebook-f"></i>
-                        <p>Like Us</p>
-                    </a>
-                    <?php endif; ?>
-                    
-                    <?php if (shouldDisplayItem('whatsapp', $itemVisibility)): ?>
-                    <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=WhatsApp&track=<?php echo urlencode('https://wa.me/'.htmlspecialchars($hotel['whatsapp'])); ?>" class="service-item service-card">
-                        <i class="fab fa-whatsapp"></i>
-                        <p>Chat With Us</p>
-                    </a>
-                    <?php endif; ?>
-                </div>
-
-                <div class="item">
-                    <?php if (shouldDisplayItem('phone', $itemVisibility)): ?>
-                    <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Phone Call&track=<?php echo urlencode('tel:'.htmlspecialchars($hotel['phone'])); ?>" class="service-item service-card">
-                        <i class="fas fa-phone-alt"></i>
-                        <p>Call Us</p>
-                    </a>
-                    <?php endif; ?>
-                    
-                    <?php if (shouldDisplayItem('local_attractions', $itemVisibility)): ?>
-                    <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Local Attractions&track=<?php echo urlencode('places/lucknow_places.php?hotel_id='.$id); ?>" class="service-item service-card">
-                        <i class="fas fa-map-signs"></i>
-                        <p>Local Attractions</p>
-                    </a>
-                    <?php endif; ?>
-                </div>
-                <?php
-            }
-            // Advanced Plan (2)
-            elseif ($planType == 2) {
-                ?>
-                <!-- Advanced Plan Services -->
-                <div class="item">
-                    <?php if (shouldDisplayItem('google_review', $itemVisibility)): ?>
-                    <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Google Review&track=<?php echo urlencode('google_review/index.php?id='.$hotel['id']); ?>" class="service-item service-card">
-                        <i class="fab fa-google"></i>
-                        <p>Review Us</p>
-                    </a>
-                    <?php endif; ?>
-                    
-                    <?php if (shouldDisplayItem('facebook', $itemVisibility)): ?>
-                    <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Facebook&track=<?php echo urlencode(htmlspecialchars($hotel['facebook_link'])); ?>" class="service-item service-card">
-                        <i class="fab fa-facebook-f"></i>
-                        <p>Like Us</p>
-                    </a>
-                    <?php endif; ?>
-                </div>
-
-                <div class="item">
-                    <?php if (shouldDisplayItem('instagram', $itemVisibility)): ?>
-                    <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Instagram&track=<?php echo urlencode(htmlspecialchars($hotel['instagram_link'])); ?>" class="service-item service-card">
-                        <i class="fab fa-instagram"></i>
-                        <p>Follow Us!</p>
-                    </a>
-                    <?php endif; ?>
-                    
-                    <?php if (shouldDisplayItem('whatsapp', $itemVisibility)): ?>
-                    <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=WhatsApp&track=<?php echo urlencode('https://wa.me/'.htmlspecialchars($hotel['whatsapp'])); ?>" class="service-item service-card">
-                        <i class="fab fa-whatsapp"></i>
-                        <p>Chat With Us</p>
-                    </a>
-                    <?php endif; ?>
-                </div>
-
-                <div class="item">
-                    <?php if (shouldDisplayItem('phone', $itemVisibility)): ?>
-                    <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Phone Call&track=<?php echo urlencode('tel:'.htmlspecialchars($hotel['phone'])); ?>" class="service-item service-card">
-                        <i class="fas fa-phone-alt"></i>
-                        <p>Call Us</p>
-                    </a>
-                    <?php endif; ?>
-                    
-                    <?php if (shouldDisplayItem('local_attractions', $itemVisibility)): ?>
-                    <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Local Attractions&track=<?php echo urlencode('places/lucknow_places.php?hotel_id='.$id); ?>" class="service-item service-card">
-                        <i class="fas fa-map-signs"></i>
-                        <p>Local Attractions</p>
-                    </a>
-                    <?php endif; ?>
-                </div>
-
-                <div class="item">
-                    <?php if (shouldDisplayItem('dining_menu', $itemVisibility)): ?>
-                    <?php
-                    $diningMenu = $hotel['dining_menu'];
-                    if (filter_var($diningMenu, FILTER_VALIDATE_URL)) {
-                        $link = htmlspecialchars($diningMenu);
-                    } else {
-                        $link = "dining_menu/dining_menu.php?id=" . $hotel["id"];
-                    }
-                    ?>
-                    <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Dining Menu&track=<?php echo urlencode($link); ?>" class="service-item service-card">
-                        <i class="fas fa-concierge-bell"></i>
-                        <p>Dining Menu</p>
-                    </a>
-                    <?php endif; ?>
-                    
-                    <?php if (shouldDisplayItem('amenities', $itemVisibility)): ?>
-                    <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Amenities&track=<?php echo urlencode('amenities/amenities.php?id='.$id); ?>" class="service-item service-card">
-                        <i class="fas fa-spa"></i>
-                        <p>Amenities</p>
-                    </a>
-                    <?php endif; ?>
-                </div>
-
-                <div class="item">
-                    <?php if (shouldDisplayItem('tv_channels', $itemVisibility)): ?>
-                    <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=TV Channels&track=#" class="service-item service-card">
-                        <i class="fas fa-tv"></i>
-                        <p>TV Channels</p>
-                    </a>
-                    <?php endif; ?>
-                    
-                    <?php if (shouldDisplayItem('compass', $itemVisibility)): ?>
-                    <a href="https://haeavycoding.github.io/compass/" class="service-item service-card">
-                        <i class="fas fa-compass"></i>
-                        <p>Digital Compass</p>
-                    </a>
-                    <?php endif; ?>
-                </div>
-                <?php
-            }
-            // Premium Plan (3)
-            elseif ($planType == 3) {
-                ?>
-                <!-- Premium Plan Services - Includes all services -->
-                <div class="item">
-                    <?php if (shouldDisplayItem('google_review', $itemVisibility)): ?>
-                    <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Google Review&track=<?php echo urlencode('google_review/index.php?id='.$hotel['id']); ?>" class="service-item service-card">
-                        <i class="fab fa-google"></i>
-                        <p>Review Us</p>
-                    </a>
-                    <?php endif; ?>
-                    
-                    <?php if (shouldDisplayItem('dining_menu', $itemVisibility)): ?>
-                    <?php
-                    $diningMenu = $hotel['dining_menu'];
-                    if (filter_var($diningMenu, FILTER_VALIDATE_URL)) {
-                        $link = htmlspecialchars($diningMenu);
-                    } else {
-                        $link = "dining_menu/dining_menu.php?id=" . $hotel["id"];
-                    }
-                    ?>
-                    <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Dining Menu&track=<?php echo urlencode($link); ?>" class="service-item service-card">
-                        <i class="fas fa-concierge-bell"></i>
-                        <p>Dining Menu</p>
-                    </a>
-                    <?php endif; ?>
-                </div>
-
-                <div class="item">
-                    <?php if (shouldDisplayItem('facebook', $itemVisibility)): ?>
-                    <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Facebook&track=<?php echo urlencode(htmlspecialchars($hotel['facebook_link'])); ?>" class="service-item service-card">
-                        <i class="fab fa-facebook-f"></i>
-                        <p>Like Us</p>
-                    </a>
-                    <?php endif; ?>
-                    
-                    <?php if (shouldDisplayItem('phone', $itemVisibility)): ?>
-                    <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Phone Call&track=<?php echo urlencode('tel:'.htmlspecialchars($hotel['phone'])); ?>" class="service-item service-card">
-                        <i class="fas fa-phone-alt"></i>
-                        <p>Call Us</p>
-                    </a>
-                    <?php endif; ?>
-                </div>
-
-                <div class="item">
-                    <?php if (shouldDisplayItem('instagram', $itemVisibility)): ?>
-                    <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Instagram&track=<?php echo urlencode(htmlspecialchars($hotel['instagram_link'])); ?>" class="service-item service-card">
-                        <i class="fab fa-instagram"></i>
-                        <p>Follow Us!</p>
-                    </a>
-                    <?php endif; ?>
-                    
-                    <?php if (shouldDisplayItem('whatsapp', $itemVisibility)): ?>
-                    <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=WhatsApp&track=<?php echo urlencode('https://wa.me/'.htmlspecialchars($hotel['whatsapp'])); ?>" class="service-item service-card">
-                        <i class="fab fa-whatsapp"></i>
-                        <p>Chat With Us</p>
-                    </a>
-                    <?php endif; ?>
-                </div>
-
-                <div class="item">
-                    <?php if (shouldDisplayItem('local_attractions', $itemVisibility)): ?>
-                    <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Local Attractions&track=<?php echo urlencode('places/lucknow_places.php?hotel_id='.$id); ?>" class="service-item service-card">
-                        <i class="fas fa-map-signs"></i>
-                        <p>Local Attractions</p>
-                    </a>
-                    <?php endif; ?>
-                    
-                    <?php if (shouldDisplayItem('find_us', $itemVisibility)): ?>
-                    <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Find Us&track=#" class="service-item service-card" aria-disabled="true">
-                        <i class="fas fa-map-marker-alt"></i>
-                        <p>Find Us</p>
-                    </a>
-                    <?php endif; ?>
-                </div>
-
-                <div class="item">
-                    <?php if (shouldDisplayItem('amenities', $itemVisibility)): ?>
-                    <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Amenities&track=<?php echo urlencode('amenities/amenities.php?id='.$id); ?>" class="service-item service-card">
-                        <i class="fas fa-spa"></i>
-                        <p>Amenities</p>
-                    </a>
-                    <?php endif; ?>
-                    
-                    <?php if (shouldDisplayItem('tv_channels', $itemVisibility)): ?>
-                    <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=TV Channels&track=#" class="service-item service-card">
-                        <i class="fas fa-tv"></i>
-                        <p>TV Channels</p>
-                    </a>
-                    <?php endif; ?>
-                </div>
-
-                <div class="item">
-                    <?php if (shouldDisplayItem('email', $itemVisibility)): ?>
-                    <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Email Us&track=<?php echo urlencode('mailto:'.htmlspecialchars($hotel['email'])); ?>" class="service-item service-card">
-                        <i class="fas fa-envelope"></i>
-                        <p>Email Us</p>
-                    </a>
-                    <?php endif; ?>
-                    
-                    <?php if (shouldDisplayItem('offers', $itemVisibility)): ?>
-                    <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Offers&track=#" class="service-item service-card">
-                        <i class="fas fa-gift"></i>
-                        <p>Offers</p>
-                    </a>
-                    <?php endif; ?>
-                </div>
-
-                <div class="item">
-                    <?php if (shouldDisplayItem('check_in', $itemVisibility)): ?>
-                    <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Check-In&track=#" class="service-item service-card" aria-disabled="true">
-                        <i class="fas fa-door-open greenoutline" aria-hidden="true"></i>
-                        <p>Check-In</p>
-                    </a>
-                    <?php endif; ?>
-                    
-                    <?php if (shouldDisplayItem('wifi', $itemVisibility)): ?>
-                    <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=WiFi&track=#" class="service-item service-card" aria-disabled="true">
-                        <i class="fas fa-wifi greenoutline" aria-hidden="true"></i>
-                        <p>WiFi</p>
-                    </a>
-                    <?php endif; ?>
-                </div>
-
-                <div class="item">
-                    <?php if (shouldDisplayItem('pay_us', $itemVisibility)): ?>
-                    <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Pay Us&track=#" class="service-item service-card" aria-disabled="true">
-                        <i class="fas fa-credit-card greenoutline" aria-hidden="true"></i>
-                        <p>Pay Us</p>
-                    </a>
-                    <?php endif; ?>
-                    
-                    <?php if (shouldDisplayItem('travel_destinations', $itemVisibility)): ?>
-                    <a href="track_service.php?hotel_id=<?php echo $id; ?>&service=Travel Destinations&track=#" class="service-item service-card" aria-disabled="true">
-                        <i class="fas fa-map-marked-alt greenoutline" aria-hidden="true"></i>
-                        <p>Travel Dest</p>
-                    </a>
-                    <?php endif; ?>
-                </div>
-                
-                <div class="item">
-                    <?php if (shouldDisplayItem('compass', $itemVisibility)): ?>
-                    <a href="https://haeavycoding.github.io/compass/" class="service-item service-card">
-                        <i class="fas fa-compass"></i>
-                        <p>Digital Compass</p>
-                    </a>
-                    <?php endif; ?>
-                </div>
-                <?php
-            } ?>
+            <?php endforeach; ?>
         </div>
     </div>
 
@@ -950,37 +815,44 @@ try {
         setInterval(updateTime, 1000);
         updateTime();
 
-        // Initialize Owl Carousel with full width settings
+        // Initialize Owl Carousel with dynamic settings
         $(document).ready(function () {
+            var itemCount = $(".owl-carousel .item").length;
+            
             $(".owl-carousel").owlCarousel({
-                loop: false,
-                nav: true,
-                dots: true,
+                // loop: itemCount > 1, // Only loop if we have more than one item
+                nav: itemCount > 1,  // Only show nav if we have more than one item
+                dots: itemCount > 1, // Only show dots if we have more than one item
                 center: false,
                 navText: ["←", "→"],
                 responsive: {
                     0: {
-                        items: 3,
+                        items: Math.min(3, itemCount),
                         stagePadding: 5
                     },
                     576: {
-                        items: 3,
+                        items: Math.min(3, itemCount),
                         stagePadding: 10
                     },
                     768: {
-                        items: 3,
+                        items: Math.min(3, itemCount),
                         stagePadding: 10
                     },
                     992: {
-                        items: 3,
+                        items: Math.min(3, itemCount),
                         stagePadding: 10
                     },
                     1200: {
-                        items: 3,
+                        items: Math.min(3, itemCount),
                         stagePadding: 10
                     }
                 }
             });
+            
+            // Hide navigation if only one item
+            if (itemCount <= 1) {
+                $('.owl-nav').hide();
+            }
         });
     </script>
 </body>

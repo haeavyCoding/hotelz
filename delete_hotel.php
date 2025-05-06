@@ -33,6 +33,12 @@ if (mysqli_num_rows($reviews_result) > 0) {
     // Delete all reviews for this hotel
     mysqli_query($conn, "DELETE FROM reviews WHERE hotel_id = $id");
 }
+$item_visibility_result = mysqli_query($conn, "SELECT * FROM item_visibility WHERE hotel_id = $id");
+if (mysqli_num_rows($item_visibility_result) > 0) {
+
+    // Delete all reviews for this hotel
+    mysqli_query($conn, "DELETE FROM item_visibility WHERE hotel_id = $id");
+}
 
     // uploads\reviews\review_68148b434de904.35771085.png
     // Fetch hotel images
