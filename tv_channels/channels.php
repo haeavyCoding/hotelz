@@ -1,252 +1,84 @@
-<?php
-include_once("../config.php");
-$hotel_id = $_GET["hotel_id"];
-
-// Fetch hotel details
-$hotel_query = "SELECT * FROM hotels WHERE id = $hotel_id";
-$hotel_result = $conn->query($hotel_query);
-$hotel = $hotel_result->fetch_assoc();
-
-// Fetch channels ordered by category then name
-$sql = "SELECT * FROM tv_channels ORDER BY category, name";
-$result = $conn->query($sql);
-?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TV Channels | <?php echo $hotel['hotel_name']; ?></title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        :root {
-            --primary-color: #007BFF;
-            --secondary-color: #6c757d;
-            --light-color: #f8f9fa;
-            --dark-color: #343a40;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f5f5f5;
-            color: #333;
-        }
-        
-        .hero-section {
-            background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('hotel-bg.jpg');
-            background-size: cover;
-            background-position: center;
-            color: white;
-            padding: 80px 0;
-            margin-bottom: 40px;
-            text-align: center;
-        }
-        
-        .hotel-info {
-            background-color: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            margin-bottom: 30px;
-        }
-        
-        .search-container {
-            margin: 20px 0;
-            position: relative;
-        }
-        
-        .search-container input {
-            padding: 12px 20px;
-            border-radius: 50px;
-            border: 1px solid #ddd;
-            width: 100%;
-            font-size: 16px;
-            padding-left: 45px;
-        }
-        
-        .search-container i {
-            position: absolute;
-            left: 15px;
-            top: 12px;
-            color: var(--secondary-color);
-        }
-        
-        .channel-table {
-            background-color: white;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            margin-bottom: 30px;
-        }
-        
-        .category-header {
-            background-color: var(--light-color);
-            padding: 10px 15px;
-            border-left: 5px solid var(--primary-color);
-            margin: 20px 0 10px;
-            font-weight: 600;
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        
-        th {
-            background-color: var(--primary-color);
-            color: white;
-            padding: 12px;
-            text-align: left;
-        }
-        
-        td {
-            padding: 10px 12px;
-            border-bottom: 1px solid #eee;
-        }
-        
-        tr:hover {
-            background-color: rgba(0, 123, 255, 0.05);
-        }
-        
-        .channel-logo {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            margin-right: 10px;
-            object-fit: cover;
-        }
-        
-        .footer {
-            background-color: var(--dark-color);
-            color: white;
-            padding: 20px 0;
-            text-align: center;
-            margin-top: 40px;
-        }
-        
-        @media (max-width: 768px) {
-            .hero-section {
-                padding: 60px 0;
-            }
-            
-            td, th {
-                padding: 8px 10px;
-                font-size: 14px;
-            }
-        }
-    </style>
+    <title>Document</title>
 </head>
 <body>
-    <!-- Hero Section -->
-    <section class="hero-section">
-        <div class="container">
-            <h1><i class="fas fa-tv me-2"></i> TV Channel Guide</h1>
-            <p class="lead">Browse through our extensive collection of available channels</p>
-        </div>
-    </section>
+    <style>
+        .channel-table-container {
+  overflow-x: auto;
+  padding: 20px;
+}
 
-    <div class="container">
-        <!-- Hotel Information -->
-        <div class="hotel-info">
-            <h2><?php echo $hotel['hotel_name']; ?></h2>
-            <p><i class="fas fa-map-marker-alt me-2"></i> <?php echo $hotel['location']; ?></p>
-            <p><i class="fas fa-phone me-2"></i> <?php echo $hotel['phone']; ?></p>
-        </div>
+.channel-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: Arial, sans-serif;
+  background-color: #ffffff;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
 
-        <!-- Search Box -->
-        <div class="search-container">
-            <i class="fas fa-search"></i>
-            <input type="text" id="searchInput" placeholder="Search channels by name, category or language...">
-        </div>
+.channel-table thead {
+  background-color: #213448;
+  color: #fff;
+}
 
-        <!-- Channels List -->
-        <div class="channel-table">
-            <?php
-            // Check if records exist
-            if ($result->num_rows > 0) {
-                $current_category = '';
-                
-                while ($row = $result->fetch_assoc()) {
-                    // If new category, display header
-                    if ($current_category != $row['category']) {
-                        if ($current_category != '') {
-                            echo "</table>";
-                        }
+.channel-table th, .channel-table td {
+  padding: 12px 15px;
+  border: 1px solid #ddd;
+  text-align: left;
+}
 
-                        $current_category = $row['category'];
-                        echo "<h3 class='category-header'><i class='fas fa-folder me-2'></i> {$current_category}</h3>";
-                        echo "<table class='table-responsive'>";
-                        echo "<thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Channel</th>
-                                    <th>Language</th>
-                                </tr>
-                              </thead>
-                              <tbody>";
-                    }
+.channel-table tbody tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
 
-                    echo "<tr class='channel-row' data-name='{$row['name']}' data-category='{$row['category']}' data-language='{$row['language']}'>
-                            <td>{$row['id']}</td>
-                            <td>
-                                <img src='channel-logos/{$row['id']}.png' alt='{$row['name']}' class='channel-logo'>
-                                {$row['name']}
-                            </td>
-                            <td>{$row['language']}</td>
-                          </tr>";
-                }
+.channel-table tbody tr:hover {
+  background-color: #e6f2ff;
+}
 
-                echo "</tbody></table>";
-            } else {
-                echo "<div class='alert alert-info'>No channels found.</div>";
-            }
-            ?>
-        </div>
-    </div>
+    </style>
+    <div class="channel-table-container">
+  <table class="channel-table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Category</th>
+        <th>Language</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>StarPlus</td><td>General Entertainment</td><td>Hindi</td></tr>
+      <tr><td>2</td><td>Sony Entertainment Television</td><td>General Entertainment</td><td>Hindi</td></tr>
+      <tr><td>3</td><td>Zee TV</td><td>General Entertainment</td><td>Hindi</td></tr>
+      <tr><td>4</td><td>Colors TV</td><td>General Entertainment</td><td>Hindi</td></tr>
+      <tr><td>5</td><td>Sony SAB</td><td>General Entertainment</td><td>Hindi</td></tr>
+      <tr><td>6</td><td>Star World</td><td>General Entertainment</td><td>English</td></tr>
+      <tr><td>7</td><td>Zee Café</td><td>General Entertainment</td><td>English</td></tr>
+      <tr><td>8</td><td>Sun TV</td><td>General Entertainment</td><td>Tamil</td></tr>
+      <tr><td>9</td><td>Star Maa</td><td>General Entertainment</td><td>Telugu</td></tr>
+      <tr><td>10</td><td>Asianet</td><td>General Entertainment</td><td>Malayalam</td></tr>
+      <tr><td>11</td><td>Colors Kannada</td><td>General Entertainment</td><td>Kannada</td></tr>
+      <tr><td>12</td><td>Sony Max</td><td>Movies</td><td>Hindi</td></tr>
+      <tr><td>13</td><td>Zee Cinema</td><td>Movies</td><td>Hindi</td></tr>
+      <tr><td>14</td><td>Star Gold</td><td>Movies</td><td>Hindi</td></tr>
+      <tr><td>15</td><td>HBO</td><td>Movies</td><td>English</td></tr>
+      <tr><td>16</td><td>Star Movies</td><td>Movies</td><td>English</td></tr>
+      <tr><td>17</td><td>KTV</td><td>Movies</td><td>Tamil</td></tr>
+      <tr><td>18</td><td>Udaya Movies</td><td>Movies</td><td>Kannada</td></tr>
+      <tr><td>19</td><td>Zee Talkies</td><td>Movies</td><td>Marathi</td></tr>
+      <tr><td>20</td><td>NDTV 24x7</td><td>News</td><td>English</td></tr>
+      <tr><td>21</td><td>Times Now</td><td>News</td><td>English</td></tr>
+      <tr><td>22</td><td>Republic TV</td><td>News</td><td>English</td></tr>
+      <tr><td>23</td><td>Aaj Tak</td><td>News</td><td>Hindi</td></tr>
+      <tr><td>24</td><td>Zee News</td><td>News</td><td>Hindi</td></tr>
+      <tr><td>25</td><td>India TV</td><td>News</td><td>Hindi</td></tr>
+    </tbody>
+  </table>
+</div>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <p>&copy; <?php echo date('Y'); ?> <?php echo $hotel['hotel_name']; ?>. All rights reserved.</p>
-            <p class="mb-0">For assistance, please contact front desk.</p>
-        </div>
-    </footer>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        // Search functionality
-        document.getElementById('searchInput').addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase();
-            const rows = document.querySelectorAll('.channel-row');
-            
-            rows.forEach(row => {
-                const name = row.dataset.name.toLowerCase();
-                const category = row.dataset.category.toLowerCase();
-                const language = row.dataset.language.toLowerCase();
-                
-                if (name.includes(searchTerm) || category.includes(searchTerm) || language.includes(searchTerm)) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-            
-            // Show/hide category headers based on visible rows
-            document.querySelectorAll('.category-header').forEach(header => {
-                const category = header.textContent.toLowerCase().replace('📂', '').trim();
-                const hasVisibleRows = [...rows].some(row => 
-                    row.style.display !== 'none' && 
-                    row.dataset.category.toLowerCase() === category
-                );
-                
-                header.style.display = hasVisibleRows ? '' : 'none';
-                if (header.nextElementSibling) {
-                    header.nextElementSibling.style.display = hasVisibleRows ? '' : 'none';
-                }
-            });
-        });
-    </script>
 </body>
 </html>

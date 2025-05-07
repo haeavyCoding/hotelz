@@ -6,7 +6,7 @@ if (!isset($_GET['id'])) {
     exit();
 }
 
-$hotelId = (int)$_GET['id'];
+$hotelId = (int) $_GET['id'];
 if ($hotelId <= 0) {
     header("Location: sorry.php?reason=invalid_id");
     exit();
@@ -23,10 +23,10 @@ if (!$result || $result->num_rows === 0) {
 
 $id = $_GET['id'];
 if (isset($_GET['id'])) {
-    $hotelId = (int)$_GET['id'];
+    $hotelId = (int) $_GET['id'];
     $sql = "SELECT * FROM hotels WHERE id = $hotelId AND landing_page_enabled = 1";
     $result = $conn->query($sql);
-    
+
     if ($result && $result->num_rows > 0) {
         $hotel = $result->fetch_assoc();
         // Display your landing page content here
@@ -53,9 +53,10 @@ if ($visibilityResult->num_rows > 0) {
 }
 
 // Function to check if item should be displayed
-function shouldDisplayItem($itemName, $itemVisibility) {
+function shouldDisplayItem($itemName, $itemVisibility)
+{
     // If no record exists or is_visible is true, display the item
-    return !isset($itemVisibility[$itemName]) || (bool)$itemVisibility[$itemName];
+    return !isset($itemVisibility[$itemName]) || (bool) $itemVisibility[$itemName];
 }
 
 // Increment visit counter first
@@ -84,15 +85,16 @@ try {
     $notifStmt = $conn->prepare("INSERT INTO notifications (hotel_id, message) VALUES (?, ?)");
     $notifStmt->bind_param("is", $id, $message);
     $notifStmt->execute();
-    
+
     // Function to track service clicks
-    function trackServiceClick($conn, $hotelId, $serviceName) {
+    function trackServiceClick($conn, $hotelId, $serviceName)
+    {
         // Check if record exists
         $checkStmt = $conn->prepare("SELECT id FROM service_clicks WHERE hotel_id = ? AND service_name = ?");
         $checkStmt->bind_param("is", $hotelId, $serviceName);
         $checkStmt->execute();
         $result = $checkStmt->get_result();
-        
+
         if ($result->num_rows > 0) {
             // Update existing record
             $updateStmt = $conn->prepare("UPDATE service_clicks SET click_count = click_count + 1 WHERE hotel_id = ? AND service_name = ?");
@@ -105,13 +107,13 @@ try {
             $insertStmt->execute();
         }
     }
-    
+
     // Handle service click if requested
     if (isset($_GET['track'])) {
         $serviceName = $_GET['service'] ?? '';
         if (!empty($serviceName)) {
             trackServiceClick($conn, $id, $serviceName);
-            
+
             // Redirect to the actual service URL
             header("Location: " . $_GET['track']);
             exit();
@@ -128,11 +130,11 @@ $planType = $hotel['plan_type'];
 
 // Common items for all plans
 if (shouldDisplayItem('google_review', $itemVisibility)) {
-    $link = ($planType == 1) ? htmlspecialchars($hotel['google_review_link']) : "google_review/index.php?id=".$hotel['id'];
+    $link = ($planType == 1) ? htmlspecialchars($hotel['google_review_link']) : "google_review/index.php?id=" . $hotel['id'];
     $visibleItems[] = [
         'icon' => 'fab fa-google',
         'text' => 'Review Us',
-        'link' => "track_service.php?hotel_id=$id&service=Google Review&track=".urlencode($link)
+        'link' => "track_service.php?hotel_id=$id&service=Google Review&track=" . urlencode($link)
     ];
 }
 
@@ -140,7 +142,7 @@ if (shouldDisplayItem('instagram', $itemVisibility)) {
     $visibleItems[] = [
         'icon' => 'fab fa-instagram',
         'text' => 'Follow Us!',
-        'link' => "track_service.php?hotel_id=$id&service=Instagram&track=".urlencode(htmlspecialchars($hotel['instagram_link']))
+        'link' => "track_service.php?hotel_id=$id&service=Instagram&track=" . urlencode(htmlspecialchars($hotel['instagram_link']))
     ];
 }
 
@@ -148,7 +150,7 @@ if (shouldDisplayItem('facebook', $itemVisibility)) {
     $visibleItems[] = [
         'icon' => 'fab fa-facebook-f',
         'text' => 'Like Us',
-        'link' => "track_service.php?hotel_id=$id&service=Facebook&track=".urlencode(htmlspecialchars($hotel['facebook_link']))
+        'link' => "track_service.php?hotel_id=$id&service=Facebook&track=" . urlencode(htmlspecialchars($hotel['facebook_link']))
     ];
 }
 
@@ -156,7 +158,7 @@ if (shouldDisplayItem('whatsapp', $itemVisibility)) {
     $visibleItems[] = [
         'icon' => 'fab fa-whatsapp',
         'text' => 'Chat With Us',
-        'link' => "track_service.php?hotel_id=$id&service=WhatsApp&track=".urlencode('https://wa.me/'.htmlspecialchars($hotel['whatsapp']))
+        'link' => "track_service.php?hotel_id=$id&service=WhatsApp&track=" . urlencode('https://wa.me/' . htmlspecialchars($hotel['whatsapp']))
     ];
 }
 
@@ -164,7 +166,7 @@ if (shouldDisplayItem('phone', $itemVisibility)) {
     $visibleItems[] = [
         'icon' => 'fas fa-phone-alt',
         'text' => 'Call Us',
-        'link' => "track_service.php?hotel_id=$id&service=Phone Call&track=".urlencode('tel:'.htmlspecialchars($hotel['phone']))
+        'link' => "track_service.php?hotel_id=$id&service=Phone Call&track=" . urlencode('tel:' . htmlspecialchars($hotel['phone']))
     ];
 }
 
@@ -172,7 +174,7 @@ if (shouldDisplayItem('local_attractions', $itemVisibility)) {
     $visibleItems[] = [
         'icon' => 'fas fa-map-signs',
         'text' => 'Local Attractions',
-        'link' => "track_service.php?hotel_id=$id&service=Local Attractions&track=".urlencode('places/lucknow_places.php?hotel_id='.$id)
+        'link' => "track_service.php?hotel_id=$id&service=Local Attractions&track=" . urlencode('places/lucknow_places.php?hotel_id=' . $id)
     ];
 }
 
@@ -180,11 +182,11 @@ if (shouldDisplayItem('local_attractions', $itemVisibility)) {
 if ($planType >= 2) {
     if (shouldDisplayItem('dining_menu', $itemVisibility)) {
         $diningMenu = $hotel['dining_menu'];
-        $link = filter_var($diningMenu, FILTER_VALIDATE_URL) ? htmlspecialchars($diningMenu) : "dining_menu/dining_menu.php?id=".$hotel["id"];
+        $link = filter_var($diningMenu, FILTER_VALIDATE_URL) ? htmlspecialchars($diningMenu) : "dining_menu/dining_menu.php?id=" . $hotel["id"];
         $visibleItems[] = [
             'icon' => 'fas fa-concierge-bell',
             'text' => 'Dining Menu',
-            'link' => "track_service.php?hotel_id=$id&service=Dining Menu&track=".urlencode($link)
+            'link' => "track_service.php?hotel_id=$id&service=Dining Menu&track=" . urlencode($link)
         ];
     }
 
@@ -192,7 +194,7 @@ if ($planType >= 2) {
         $visibleItems[] = [
             'icon' => 'fas fa-spa',
             'text' => 'Amenities',
-            'link' => "track_service.php?hotel_id=$id&service=Amenities&track=".urlencode('amenities/amenities.php?id='.$id)
+            'link' => "track_service.php?hotel_id=$id&service=Amenities&track=" . urlencode('amenities.php?hotel_id=' . $id)
         ];
     }
 
@@ -203,14 +205,6 @@ if ($planType >= 2) {
             'link' => "track_service.php?hotel_id=$id&service=TV Channels&track=#"
         ];
     }
-
-    if (shouldDisplayItem('compass', $itemVisibility)) {
-        $visibleItems[] = [
-            'icon' => 'fas fa-compass',
-            'text' => 'Digital Compass',
-            'link' => "https://haeavycoding.github.io/compass/"
-        ];
-    }
 }
 
 // Premium plan only items
@@ -219,7 +213,7 @@ if ($planType == 3) {
         $visibleItems[] = [
             'icon' => 'fas fa-envelope',
             'text' => 'Email Us',
-            'link' => "track_service.php?hotel_id=$id&service=Email Us&track=".urlencode('mailto:'.htmlspecialchars($hotel['email']))
+            'link' => "track_service.php?hotel_id=$id&service=Email Us&track=" . urlencode('mailto:' . htmlspecialchars($hotel['email']))
         ];
     }
 
@@ -372,7 +366,8 @@ $carouselClass = (count($groupedItems) > 1) ? 'multi-item' : 'single-item-carous
             z-index: 2;
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
-        .content-1 h3{
+
+        .content-1 h3 {
             font-size: 3rem
         }
 
@@ -612,6 +607,7 @@ $carouselClass = (count($groupedItems) > 1) ? 'multi-item' : 'single-item-carous
             .background-image {
                 height: 80vh;
             }
+
             .owl-nav {
                 display: none
             }
@@ -651,10 +647,12 @@ $carouselClass = (count($groupedItems) > 1) ? 'multi-item' : 'single-item-carous
                 padding: 7px 10px;
             }
         }
+
         @media (max-width: 675px) {
-            *{
+            * {
                 font-size: 12px;
             }
+
             .navbar img {
                 width: 100px;
                 height: 60px;
@@ -668,7 +666,8 @@ $carouselClass = (count($groupedItems) > 1) ? 'multi-item' : 'single-item-carous
                 height: 70vh;
                 min-height: 350px;
             }
-            .content-1 h3{
+
+            .content-1 h3 {
                 font-size: 2rem;
             }
 
@@ -707,12 +706,13 @@ $carouselClass = (count($groupedItems) > 1) ? 'multi-item' : 'single-item-carous
             .owl-carousel .owl-stage {
                 padding: 20px 10px;
             }
-        }   
+        }
 
         @media (max-width: 400px) {
             .background-image {
                 height: 70vh;
             }
+
             .services-container {
                 margin-top: -110px;
                 padding: 20px 0 !important;
@@ -725,6 +725,45 @@ $carouselClass = (count($groupedItems) > 1) ? 'multi-item' : 'single-item-carous
 
             .service-item i {
                 font-size: 28px;
+            }
+        }
+
+        .compass-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            /* margin: 15px; */
+        }
+
+        .compass-icon {
+            background: linear-gradient(145deg, #003049, #2a6f97);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            color: #ffd700;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px !important;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
+            transition: all 0.3s ease;
+        }
+
+        .compass-icon:hover {
+            background: linear-gradient(145deg, #0077b6, #023e8a);
+            color: #ffd700;
+            scale: 1.1;
+            /* Gold hover effect */
+        }
+
+        @media (max-width: 600px) {
+            .compass-icon {
+                width: 35px;
+                height: 35px;
+            }
+
+            .compass-icon>i {
+                font-size: 30px !important;
             }
         }
     </style>
@@ -754,6 +793,12 @@ $carouselClass = (count($groupedItems) > 1) ? 'multi-item' : 'single-item-carous
                 ?>
             </a>
             <div class="d-flex gap-3 align-items-center">
+                <div class="compass-container" title="Digital Compass">
+                    <a href="compass.php" class="compass-icon" title="Digital Compass">
+                        🧭
+                    </a>
+                </div>
+
                 <div class="time-display-container">
                     <span id="time-display" class="text-white fw-bold"></span>
                 </div>
@@ -818,7 +863,7 @@ $carouselClass = (count($groupedItems) > 1) ? 'multi-item' : 'single-item-carous
         // Initialize Owl Carousel with dynamic settings
         $(document).ready(function () {
             var itemCount = $(".owl-carousel .item").length;
-            
+
             $(".owl-carousel").owlCarousel({
                 // loop: itemCount > 1, // Only loop if we have more than one item
                 nav: itemCount > 1,  // Only show nav if we have more than one item
@@ -848,7 +893,7 @@ $carouselClass = (count($groupedItems) > 1) ? 'multi-item' : 'single-item-carous
                     }
                 }
             });
-            
+
             // Hide navigation if only one item
             if (itemCount <= 1) {
                 $('.owl-nav').hide();

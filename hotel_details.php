@@ -728,16 +728,6 @@ include 'layouts/header.php';
                 </div>
             <?php endif; ?>
 
-            <!-- Location Map -->
-            <div class="info-section">
-                <h3><i class="fas fa-map-marked-alt"></i> Location</h3>
-                <div style="height: 400px; width: 100%; border-radius: 8px; overflow: hidden;">
-                    <iframe width="100%" height="100%" frameborder="0" scrolling="no" marginheight="0" marginwidth="0"
-                        src="https://maps.google.com/maps?q=<?php echo urlencode($hotel['location']); ?>&output=embed">
-                    </iframe>
-                </div>
-            </div>
-
             <!-- Service Popularity -->
             <div class="info-section">
                 <h3><i class="fas fa-chart-line"></i> Service Popularity</h3>
