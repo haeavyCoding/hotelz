@@ -138,11 +138,11 @@ if (shouldDisplayItem('google_review', $itemVisibility)) {
     ];
 }
 
-if (shouldDisplayItem('instagram', $itemVisibility)) {
+if (shouldDisplayItem('phone', $itemVisibility)) {
     $visibleItems[] = [
-        'icon' => 'fab fa-instagram',
-        'text' => 'Follow Us!',
-        'link' => "track_service.php?hotel_id=$id&service=Instagram&track=" . urlencode(htmlspecialchars($hotel['instagram_link']))
+        'icon' => 'fas fa-phone-alt',
+        'text' => 'Call Us',
+        'link' => "track_service.php?hotel_id=$id&service=Phone Call&track=" . urlencode('tel:' . htmlspecialchars($hotel['phone']))
     ];
 }
 
@@ -162,11 +162,11 @@ if (shouldDisplayItem('whatsapp', $itemVisibility)) {
     ];
 }
 
-if (shouldDisplayItem('phone', $itemVisibility)) {
+if (shouldDisplayItem('instagram', $itemVisibility)) {
     $visibleItems[] = [
-        'icon' => 'fas fa-phone-alt',
-        'text' => 'Call Us',
-        'link' => "track_service.php?hotel_id=$id&service=Phone Call&track=" . urlencode('tel:' . htmlspecialchars($hotel['phone']))
+        'icon' => 'fab fa-instagram',
+        'text' => 'Follow Us!',
+        'link' => "track_service.php?hotel_id=$id&service=Instagram&track=" . urlencode(htmlspecialchars($hotel['instagram_link']))
     ];
 }
 
