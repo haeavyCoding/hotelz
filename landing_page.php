@@ -123,7 +123,6 @@ try {
 } catch (Exception $e) {
     $conn->rollback();
 }
-
 // Prepare visible items based on plan type and visibility settings
 $visibleItems = [];
 $planType = $hotel['plan_type'];
@@ -170,16 +169,18 @@ if (shouldDisplayItem('instagram', $itemVisibility)) {
     ];
 }
 
-if (shouldDisplayItem('local_attractions', $itemVisibility)) {
-    $visibleItems[] = [
-        'icon' => 'fas fa-map-signs',
-        'text' => 'Local Attractions',
-        'link' => "track_service.php?hotel_id=$id&service=Local Attractions&track=" . urlencode('places/lucknow_places.php?hotel_id=' . $id)
-    ];
-}
-
-// Advanced and Premium plan items
-if ($planType >= 2) {
+// Basic plan shows "Find Us" instead of "Dining Menu"
+if ($planType == 1) {
+    if (shouldDisplayItem('find_us', $itemVisibility)) {
+        $visibleItems[] = [
+            'icon' => 'fas fa-map-marker-alt',
+            'text' => 'Find Us',
+            'link' => "track_service.php?hotel_id=$id&service=Find Us&track=" . urlencode('find_us.php?hotel_id=' . $id)
+        ];
+    }
+} 
+// Advanced and Premium plans show "Dining Menu"
+else {
     if (shouldDisplayItem('dining_menu', $itemVisibility)) {
         $diningMenu = $hotel['dining_menu'];
         $link = filter_var($diningMenu, FILTER_VALIDATE_URL) ? htmlspecialchars($diningMenu) : "dining_menu/dining_menu.php?id=" . $hotel["id"];
@@ -189,14 +190,9 @@ if ($planType >= 2) {
             'link' => "track_service.php?hotel_id=$id&service=Dining Menu&track=" . urlencode($link)
         ];
     }
-
-    if (shouldDisplayItem('amenities', $itemVisibility)) {
-        $visibleItems[] = [
-            'icon' => 'fas fa-spa',
-            'text' => 'Amenities',
-            'link' => "track_service.php?hotel_id=$id&service=Amenities&track=" . urlencode('amenities.php?hotel_id=' . $id)
-        ];
-    }
+}
+// Premium plan only items
+if ($planType == 3) {
 
     if (shouldDisplayItem('tv_channels', $itemVisibility)) {
         $visibleItems[] = [
@@ -205,17 +201,7 @@ if ($planType >= 2) {
             'link' => "track_service.php?hotel_id=$id&service=TV Channels&track=#"
         ];
     }
-}
 
-// Premium plan only items
-if ($planType == 3) {
-    if (shouldDisplayItem('email', $itemVisibility)) {
-        $visibleItems[] = [
-            'icon' => 'fas fa-envelope',
-            'text' => 'Email Us',
-            'link' => "track_service.php?hotel_id=$id&service=Email Us&track=" . urlencode('mailto:' . htmlspecialchars($hotel['email']))
-        ];
-    }
 
     if (shouldDisplayItem('offers', $itemVisibility)) {
         $visibleItems[] = [
