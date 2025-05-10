@@ -42,20 +42,20 @@ if (isset($_GET['edit'])) {
 }
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Sanitize and validate input
-    $hotel_name = filter_input(INPUT_POST, 'hotel_name', FILTER_SANITIZE_STRING);
-    $location = filter_input(INPUT_POST, 'location', FILTER_SANITIZE_STRING);
-    $description = filter_input(INPUT_POST, 'description', FILTER_SANITIZE_STRING);
-    $price_range = filter_input(INPUT_POST, 'price_range', FILTER_SANITIZE_STRING);
-    $amenities = filter_input(INPUT_POST, 'amenities', FILTER_SANITIZE_STRING);
-    $phone = filter_input(INPUT_POST, 'phone', FILTER_SANITIZE_STRING);
-    $whatsapp = filter_input(INPUT_POST, 'whatsapp', FILTER_SANITIZE_STRING);
-    $email = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL);
-    $website = filter_input(INPUT_POST, 'website', FILTER_SANITIZE_URL);
-    $google_review = filter_input(INPUT_POST, 'google_review', FILTER_SANITIZE_URL);
-    $facebook = filter_input(INPUT_POST, 'facebook', FILTER_SANITIZE_URL);
-    $instagram = filter_input(INPUT_POST, 'instagram', FILTER_SANITIZE_URL);
-    $dining_menu = isset($_POST['dining_menu']) ? implode(',', array_filter($_POST['dining_menu'])) : '';
+    // Sanitize and validate input with trim()
+    $hotel_name = trim(filter_input(INPUT_POST, 'hotel_name', FILTER_SANITIZE_STRING));
+    $location = trim(filter_input(INPUT_POST, 'location', FILTER_SANITIZE_STRING));
+    $description = trim(filter_input(INPUT_POST, 'description', FILTER_SANITIZE_STRING));
+    $price_range = trim(filter_input(INPUT_POST, 'price_range', FILTER_SANITIZE_STRING));
+    $amenities = trim(filter_input(INPUT_POST, 'amenities', FILTER_SANITIZE_STRING));
+    $phone = trim(filter_input(INPUT_POST, 'phone', FILTER_SANITIZE_STRING));
+    $whatsapp = trim(filter_input(INPUT_POST, 'whatsapp', FILTER_SANITIZE_STRING));
+    $email = trim(filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL));
+    $website = trim(filter_input(INPUT_POST, 'website', FILTER_SANITIZE_URL));
+    $google_review = trim(filter_input(INPUT_POST, 'google_review', FILTER_SANITIZE_URL));
+    $facebook = trim(filter_input(INPUT_POST, 'facebook', FILTER_SANITIZE_URL));
+    $instagram = trim(filter_input(INPUT_POST, 'instagram', FILTER_SANITIZE_URL));
+    $dining_menu = isset($_POST['dining_menu']) ? implode(',', array_filter(array_map('trim', $_POST['dining_menu']))) : '';
     $plan_type = isset($_POST['plan_type']) ? intval($_POST['plan_type']) : $plan;
 
     if (empty($hotel_name) || empty($location)) {
@@ -70,15 +70,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if (isset($_FILES['hotel_image']) && $_FILES['hotel_image']['error'] === UPLOAD_ERR_OK) {
             $image_url = processFileUpload('hotel_image', $hotel['image_url'] ?? '', $upload_dir);
             if ($image_url === false) {
-                $error = "Failed to upload hotel image. Only JPG, PNG, GIF allowed (max 5MB).";
+                $error = "Failed to upload hotel image. Only JPG, PNG, GIF, WEBP allowed (max 4MB).";
             }
         }
 
-        // Process map background upload (for all plans)
-        if (empty($error) && isset($_FILES['map_background']) && $_FILES['map_background']['error'] === UPLOAD_ERR_OK) {
+        // Process map background upload (for advance and premium plans)
+        if (empty($error) && $plan_type >= 2 && isset($_FILES['map_background']) && $_FILES['map_background']['error'] === UPLOAD_ERR_OK) {
             $map_background_url = processFileUpload('map_background', $hotel['google_map_background'] ?? '', $upload_dir);
             if ($map_background_url === false) {
-                $error = "Failed to upload map background. Only JPG, PNG, GIF allowed (max 5MB).";
+                $error = "Failed to upload map background. Only JPG, PNG, GIF, WEBP allowed (max 4MB).";
             }
         }
 
@@ -86,7 +86,35 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if (empty($error) && isset($_FILES['logo_of_hotel']) && $_FILES['logo_of_hotel']['error'] === UPLOAD_ERR_OK) {
             $logo_url = processFileUpload('logo_of_hotel', $hotel['logo_of_hotel'] ?? '', $upload_dir);
             if ($logo_url === false) {
-                $error = "Failed to upload logo. Only JPG, PNG, GIF allowed (max 5MB).";
+                $error = "Failed to upload logo. Only JPG, PNG, GIF, WEBP allowed (max 4MB).";
+            }
+        }
+
+        // Process dining menu uploads for Advance/Premium plans
+        if (empty($error) && $plan_type >= 2 && !empty($_FILES['dining_menu_files'])) {
+            $uploaded_menu_files = [];
+            foreach ($_FILES['dining_menu_files']['name'] as $key => $name) {
+                if ($_FILES['dining_menu_files']['error'][$key] === UPLOAD_ERR_OK) {
+                    $file_info = [
+                        'name' => $name,
+                        'type' => $_FILES['dining_menu_files']['type'][$key],
+                        'tmp_name' => $_FILES['dining_menu_files']['tmp_name'][$key],
+                        'error' => $_FILES['dining_menu_files']['error'][$key],
+                        'size' => $_FILES['dining_menu_files']['size'][$key]
+                    ];
+                    
+                    $uploaded_path = processDiningMenuUpload($file_info, $upload_dir);
+                    if ($uploaded_path !== false) {
+                        $uploaded_menu_files[] = $uploaded_path;
+                    } else {
+                        $error = "Failed to upload dining menu file. Only JPG, PNG, GIF, WEBP, PDF allowed (max 4MB).";
+                        break;
+                    }
+                }
+            }
+            
+            if (empty($error)) {
+                $dining_menu = implode(',', array_filter(array_merge(explode(',', $dining_menu), $uploaded_menu_files)));
             }
         }
 
@@ -161,8 +189,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 function processFileUpload($fieldName, $currentFilePath, $uploadDir)
 {
-    $allowed = ['jpg', 'jpeg', 'png', 'gif'];
-    $maxFileSize = 5 * 1024 * 1024; // 5MB
+    $allowed = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+    $maxFileSize = 4 * 1024 * 1024; // 4MB
 
     $filename = $_FILES[$fieldName]['name'];
     $tmp_name = $_FILES[$fieldName]['tmp_name'];
@@ -184,7 +212,7 @@ function processFileUpload($fieldName, $currentFilePath, $uploadDir)
     $finfo = finfo_open(FILEINFO_MIME_TYPE);
     $mime = finfo_file($finfo, $tmp_name);
     finfo_close($finfo);
-    $allowedMimes = ['image/jpeg', 'image/png', 'image/gif'];
+    $allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     if (!in_array($mime, $allowedMimes)) {
         return false;
     }
@@ -205,179 +233,198 @@ function processFileUpload($fieldName, $currentFilePath, $uploadDir)
     return false;
 }
 
+function processDiningMenuUpload($file, $uploadDir)
+{
+    $allowed = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf'];
+    $maxFileSize = 4 * 1024 * 1024; // 4MB
+
+    $filename = $file['name'];
+    $tmp_name = $file['tmp_name'];
+    $fileSize = $file['size'];
+    $fileType = $file['type'];
+    $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+
+    // Verify file extension
+    if (!in_array($ext, $allowed)) {
+        return false;
+    }
+
+    // Verify file size
+    if ($fileSize > $maxFileSize) {
+        return false;
+    }
+
+    // Verify MIME type
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $mime = finfo_file($finfo, $tmp_name);
+    finfo_close($finfo);
+    $allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
+    if (!in_array($mime, $allowedMimes)) {
+        return false;
+    }
+
+    // Generate unique filename
+    $newname = uniqid('menu_', true) . '.' . $ext;
+    $destination = $uploadDir . '/' . $newname;
+
+    if (move_uploaded_file($tmp_name, $destination)) {
+        return $destination;
+    }
+
+    return false;
+}
+
 include 'layouts/header.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo isset($_GET['edit']) ? 'Edit' : 'Add'; ?> Hotel - Hotel Management</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap"
+        rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #2c3e50;
-            --secondary-color: #3498db;
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
             --accent-color: #e74c3c;
-            --light-color: #f8f9fa;
-            --dark-color: #343a40;
-            --text-color: #495057;
-            --border-radius: 12px;
-            --box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
         }
-        * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-
+        
         body {
             font-family: 'Poppins', sans-serif;
-            background-color: #f5f7fa;
-            color: var(--text-color);
-            line-height: 1.6;
+            background-color: #f8f9fa;
+            color: #333;
         }
-
+        
+        .app-main {
+            padding: 20px 0;
+        }
+        
         .admin-header {
-            background: white;
-            padding: 25px;
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
             margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
         }
-
+        
         .admin-header h1 {
-            font-family: 'Playfair Display', serif;
-            color: var(--primary-color);
-            display: flex;
-            align-items: center;
-            gap: 15px;
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--secondary-color);
+            margin-bottom: 0;
         }
-
+        
         .form-container {
-            background: white;
-            border-radius: var(--border-radius);
-            padding: 30px;
-            box-shadow: var(--box-shadow);
-            margin-bottom: 30px;
+            background-color: white;
+            border-radius: 8px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
         }
-
+        
         .form-section-title {
-            font-family: 'Playfair Display', serif;
-            color: var(--primary-color);
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: var(--secondary-color);
             margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
         }
-
+        
         .required-field::after {
             content: " *";
             color: var(--accent-color);
         }
-
-        .current-image img {
-            max-width: 100%;
-            max-height: 200px;
-            border-radius: var(--border-radius);
-            margin-bottom: 10px;
-            border: 1px solid #ddd;
-            padding: 5px;
+        
+        .plan-badge {
+            font-size: 0.8rem;
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin-left: 10px;
+            vertical-align: middle;
         }
-
+        
+        .plan-basic {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        .plan-advance {
+            background-color: #e8f5e9;
+            color: #388e3c;
+        }
+        
+        .plan-premium {
+            background-color: #f3e5f5;
+            color: #8e24aa;
+        }
+        
+        .current-image {
+            margin-bottom: 10px;
+        }
+        
         .dining-menu-item {
-            margin-bottom: 10px;
+            background-color: #f8f9fa;
         }
-
+        
         .btn-primary {
-            background-color: var(--secondary-color);
-            border-color: var(--secondary-color);
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
         }
-
+        
         .btn-primary:hover {
             background-color: #2980b9;
             border-color: #2980b9;
         }
-
+        
         .btn-danger {
             background-color: var(--accent-color);
             border-color: var(--accent-color);
         }
-
-        .menu-type-label {
-            padding: 6px 12px;
-            border: 2px solid #ddd;
-            border-radius: 25px;
-            cursor: pointer;
-            margin-right: 10px;
-            transition: all 0.3s ease;
-            background: #f8f9fa;
-        }
-
-        .menu-type-label.active {
-            background: var(--secondary-color);
-            color: white;
-            border-color: var(--secondary-color);
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-        }
-
-        .menu-type-label:hover {
-            background: #e9ecef;
-        }
-
-        .menu-type {
-            display: none;
-        }
-
-        .dining-menu-item.active {
-            border-color: var(--secondary-color);
-            background-color: #f8fbff;
+        
+        .btn-success {
+            background-color: #2ecc71;
+            border-color: #2ecc71;
         }
         
-        .plan-badge {
-            font-size: 1rem;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            margin-left: 15px;
-        }
-        .plan-basic {
-            background-color: #6c757d;
-            color: white;
-        }
-        .plan-advance {
-            background-color: #17a2b8;
-            color: white;
-        }
-        .plan-premium {
-            background-color: #ffc107;
-            color: #212529;
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
         }
         
-        .disabled-field {
-            opacity: 0.6;
-            pointer-events: none;
+        .form-text {
+            font-size: 0.85rem;
+            color: #6c757d;
         }
-        @media (max-width: 576px) {
-      * {
-      font-size: 14px;
-    } }
+        
+        @media (max-width: 768px) {
+            .admin-header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .form-section-title {
+                font-size: 1.1rem;
+            }
+        }
     </style>
 </head>
+
 <body>
     <main class="app-main">
         <div class="container py-4">
             <header class="admin-header">
-                <h1>
-                    <i class="fas fa-<?php echo isset($_GET['edit']) ? 'edit' : 'plus-circle'; ?>"></i>
+                <h1 class="d-flex align-items-center">
+                    <i class="fas fa-<?php echo isset($_GET['edit']) ? 'edit' : 'plus-circle'; ?> me-2"></i>
                     <?php echo isset($_GET['edit']) ? 'Edit' : 'Add'; ?> Hotel
                     <?php if ($plan > 0): ?>
-                        <span class="plan-badge plan-<?php 
-                            echo $plan == 1 ? 'basic' : ($plan == 2 ? 'advance' : 'premium'); 
-                        ?>">
+                        <span class="plan-badge plan-<?php
+                        echo $plan == 1 ? 'basic' : ($plan == 2 ? 'advance' : 'premium');
+                        ?> ms-2">
                             <?php echo $plan == 1 ? 'Basic' : ($plan == 2 ? 'Advance' : 'Premium'); ?> Plan
                         </span>
                     <?php endif; ?>
@@ -392,11 +439,28 @@ include 'layouts/header.php';
 
             <form method="POST" enctype="multipart/form-data" class="form-container">
                 <input type="hidden" name="plan_type" value="<?php echo $plan; ?>">
-                
+
+                <!-- Plan Selection Section -->
+                <div class="mb-4">
+                    <h3 class="form-section-title">
+                        <i class="fas fa-star me-2"></i> Hotel Plan
+                    </h3>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="plan_type" class="form-label required-field">Select Plan</label>
+                            <select class="form-select" id="plan_type" name="plan_type" required>
+                                <option value="1" <?php echo ($plan == 1) ? 'selected' : ''; ?>>Basic</option>
+                                <option value="2" <?php echo ($plan == 2) ? 'selected' : ''; ?>>Advance</option>
+                                <option value="3" <?php echo ($plan == 3) ? 'selected' : ''; ?>>Premium</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Basic Information Section -->
                 <div class="mb-4">
                     <h3 class="form-section-title">
-                        <i class="fas fa-info-circle"></i> Basic Information
+                        <i class="fas fa-info-circle me-2"></i> Basic Information
                     </h3>
                     <div class="row g-3">
                         <div class="col-md-6">
@@ -409,119 +473,114 @@ include 'layouts/header.php';
                             <input type="text" class="form-control" id="location" name="location"
                                 value="<?php echo htmlspecialchars($hotel['location'] ?? ''); ?>" required>
                         </div>
-                        
-                        <div class="col-12">
-                            <label for="description" class="form-label">Description</label>
-                            <textarea class="form-control" id="description" name="description"
-                                rows="4"><?php echo htmlspecialchars($hotel['description'] ?? ''); ?></textarea>
-                           
-                        </div>
+
+                        <?php if ($plan >= 2): ?>
+                            <div class="col-12">
+                                <label for="description" class="form-label">Description</label>
+                                <textarea class="form-control" id="description" name="description"
+                                    rows="4"><?php echo htmlspecialchars($hotel['description'] ?? ''); ?></textarea>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
 
                 <!-- Hotel Details Section -->
+                <?php if ($plan >= 2): ?>
                 <div class="mb-4">
                     <h3 class="form-section-title">
-                        <i class="fas fa-list-alt"></i> Hotel Details
+                        <i class="fas fa-list-alt me-2"></i> Hotel Details
                     </h3>
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label for="price_range" class="form-label">Price Range</label>
-                            <input type="text" class="form-control <?php echo $plan == 1 ? 'disabled-field' : ''; ?>" id="price_range" name="price_range"
-                                value="<?php echo htmlspecialchars($hotel['price_range'] ?? ''); ?>" <?php echo $plan == 1 ? 'disabled' : ''; ?>>
-                            <?php if ($plan == 1): ?>
-                                <small class="text-muted">Upgrade to add price range</small>
-                            <?php endif; ?>
+                            <input type="text" class="form-control" id="price_range" name="price_range"
+                                value="<?php echo htmlspecialchars($hotel['price_range'] ?? ''); ?>">
                         </div>
                         <div class="col-md-6">
                             <label for="amenities" class="form-label">Amenities (comma separated)</label>
-                            <textarea class="form-control <?php echo $plan == 1 ? 'disabled-field' : ''; ?>" id="amenities"
-                                name="amenities" <?php echo $plan == 1 ? 'disabled' : ''; ?>><?php echo htmlspecialchars($hotel['amenities'] ?? ''); ?></textarea>
-                            <?php if ($plan == 1): ?>
-                                <small class="text-muted">Upgrade to add amenities</small>
-                            <?php endif; ?>
+                            <textarea class="form-control" id="amenities" name="amenities"><?php echo htmlspecialchars($hotel['amenities'] ?? ''); ?></textarea>
                         </div>
-                        
-                        <?php if ($plan > 2): ?>
+
                         <div class="col-12">
-                            <label class="form-label"><i class="fas fa-utensils"></i> Dining Menus</label>
+                            <label class="form-label"><i class="fas fa-utensils me-2"></i> Dining Menus</label>
                             <div id="dining-menu-wrapper">
                                 <?php
                                 $diningMenus = explode(',', $hotel['dining_menu'] ?? '');
                                 $menuCounter = 0;
                                 if (!empty($diningMenus[0])) {
                                     foreach ($diningMenus as $menu) {
-                                        $isUrl = filter_var(trim($menu), FILTER_VALIDATE_URL);
-                                        echo '<div class="dining-menu-item mb-3 p-3 border rounded" data-id="' . $menuCounter . '">
-                                <div class="mb-3">
-                                    <input type="radio" class="menu-type" name="menu_type[' . $menuCounter . ']"
-                                           value="url" id="menu_type_' . $menuCounter . '_url"
-                                           ' . ($isUrl ? 'checked' : '') . '>
-                                    <label for="menu_type_' . $menuCounter . '_url"
-                                           class="menu-type-label ' . ($isUrl ? 'active' : '') . '">
-                                        <i class="fas fa-link"></i> URL
-                                    </label>
-
-                                    <input type="radio" class="menu-type" name="menu_type[' . $menuCounter . ']"
-                                           value="text" id="menu_type_' . $menuCounter . '_text"
-                                           ' . (!$isUrl ? 'checked' : '') . '>
-                                    <label for="menu_type_' . $menuCounter . '_text"
-                                           class="menu-type-label ' . (!$isUrl ? 'active' : '') . '">
-                                        <i class="fas fa-text"></i> Text
-                                    </label>
-                                </div>
-                                <div class="input-group">
-                                    <input type="' . ($isUrl ? 'url' : 'text') . '" name="dining_menu[]"
-                                           class="form-control"
-                                           value="' . htmlspecialchars(trim($menu)) . '"
-                                           placeholder="' . ($isUrl ? 'https://example.com/menu.pdf' : 'Menu description') . '"
-                                           required>
-                                    <button type="button" class="btn btn-danger" onclick="removeDiningMenu(this)">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                </div>
-                              </div>';
-                                        $menuCounter++;
+                                        $menu = trim($menu);
+                                        if (!empty($menu)) {
+                                            echo '<div class="dining-menu-item mb-3 p-3 border rounded" data-id="' . $menuCounter . '">
+                                                <div class="input-group">
+                                                    <input type="text" name="dining_menu[]" class="form-control"
+                                                           value="' . htmlspecialchars($menu) . '"
+                                                           placeholder="Menu URL or file path" readonly>
+                                                    <button type="button" class="btn btn-danger" onclick="removeDiningMenu(this)">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                </div>';
+                                                
+                                                // Show preview if it's an image
+                                                if (preg_match('/\.(jpg|jpeg|png|gif|webp)$/i', $menu)) {
+                                                    echo '<div class="mt-2">
+                                                        <img src="' . htmlspecialchars($menu) . '" style="max-width: 200px; max-height: 150px;" class="img-thumbnail">
+                                                    </div>';
+                                                } elseif (preg_match('/\.pdf$/i', $menu)) {
+                                                    echo '<div class="mt-2">
+                                                        <a href="' . htmlspecialchars($menu) . '" target="_blank" class="btn btn-sm btn-info">
+                                                            <i class="fas fa-file-pdf"></i> View PDF
+                                                        </a>
+                                                    </div>';
+                                                }
+                                                echo '</div>';
+                                            $menuCounter++;
+                                        }
                                     }
-                                } else {
-                                    echo '<div class="dining-menu-item mb-3 p-3 border rounded" data-id="0">
-                            <div class="mb-3">
-                                <input type="radio" class="menu-type" name="menu_type[0]"
-                                       value="url" id="menu_type_0_url" checked>
-                                <label for="menu_type_0_url" class="menu-type-label active">
-                                    <i class="fas fa-link"></i> URL
-                                </label>
-
-                                <input type="radio" class="menu-type" name="menu_type[0]"
-                                       value="text" id="menu_type_0_text">
-                                <label for="menu_type_0_text" class="menu-type-label">
-                                    <i class="fas fa-text"></i> Text
-                                </label>
-                            </div>
-                            <div class="input-group">
-                                <input type="url" name="dining_menu[]" class="form-control"
-                                       placeholder="https://example.com/menu.pdf" required>
-                                <button type="button" class="btn btn-danger" onclick="removeDiningMenu(this)">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                            </div>
-                          </div>';
-                                    $menuCounter = 1;
                                 }
                                 ?>
                             </div>
-                            <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="addDiningMenu()">
-                                <i class="fas fa-plus"></i> Add Menu
-                            </button>
+                            
+                            <div class="mt-3">
+                                <div class="row mb-3">
+                                    <div class="col-md-12">
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="menu_input_type" id="menu_url" value="url" checked>
+                                            <label class="form-check-label" for="menu_url">Enter URL</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="menu_input_type" id="menu_file" value="file">
+                                            <label class="form-check-label" for="menu_file">Upload File</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div id="menu_url_section">
+                                    <div class="input-group mb-3">
+                                        <input type="text" class="form-control" id="new_menu_url" placeholder="Enter menu URL">
+                                        <button type="button" class="btn btn-success" onclick="addMenuUrl()">
+                                            <i class="fas fa-plus me-1"></i> Add URL
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div id="menu_file_section" style="display: none;">
+                                    <input type="file" class="form-control" id="new_menu_file" accept=".jpg,.jpeg,.png,.gif,.webp,.pdf">
+                                    <div class="form-text">Upload images (JPG, PNG, GIF, WEBP) or PDF files (max 4MB each)</div>
+                                    <button type="button" class="btn btn-success mt-2" onclick="uploadMenuFile()">
+                                        <i class="fas fa-upload me-1"></i> Upload File
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                        <?php endif; ?>
                     </div>
                 </div>
+                <?php endif; ?>
 
                 <!-- Contact Information -->
                 <div class="mb-4">
                     <h3 class="form-section-title">
-                        <i class="fas fa-address-card"></i> Contact Information
+                        <i class="fas fa-address-card me-2"></i> Contact Information
                     </h3>
                     <div class="row g-3">
                         <div class="col-md-6">
@@ -534,17 +593,16 @@ include 'layouts/header.php';
                             <input type="text" class="form-control" id="whatsapp" name="whatsapp"
                                 value="<?php echo htmlspecialchars($hotel['whatsapp'] ?? ''); ?>">
                         </div>
-                        
+
                         <div class="col-md-6">
-                            <label for="email" class="form-label"><i class="fas fa-envelope"></i> Email</label>
+                            <label for="email" class="form-label"><i class="fas fa-envelope me-2"></i> Email</label>
                             <input type="email" class="form-control" id="email" name="email"
                                 value="<?php echo htmlspecialchars($hotel['email'] ?? ''); ?>" required>
                         </div>
                         <div class="col-md-6">
-                            <label for="website" class="form-label"><i class="fas fa-globe"></i> Website</label>
+                            <label for="website" class="form-label"><i class="fas fa-globe me-2"></i> Website</label>
                             <input type="url" class="form-control" id="website" name="website"
                                 value="<?php echo htmlspecialchars($hotel['website'] ?? ''); ?>">
-                           
                         </div>
                     </div>
                 </div>
@@ -552,28 +610,23 @@ include 'layouts/header.php';
                 <!-- Social Media Links -->
                 <div class="mb-4">
                     <h3 class="form-section-title">
-                        <i class="fas fa-share-alt"></i> Social Media & Reviews
+                        <i class="fas fa-share-alt me-2"></i> Social Media & Reviews
                     </h3>
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label for="google_review" class="form-label"><i class="fab fa-google"></i> Google Review Link</label>
+                            <label for="google_review" class="form-label"><i class="fab fa-google me-2"></i> Google Review Link</label>
                             <input type="url" class="form-control" id="google_review" name="google_review"
                                 value="<?php echo htmlspecialchars($hotel['google_review_link'] ?? ''); ?>">
-                            
                         </div>
                         <div class="col-md-6">
-                            <label for="facebook" class="form-label"><i class="fab fa-facebook"></i> Facebook Page</label>
+                            <label for="facebook" class="form-label"><i class="fab fa-facebook me-2"></i> Facebook Page</label>
                             <input type="url" class="form-control" id="facebook" name="facebook"
                                 value="<?php echo htmlspecialchars($hotel['facebook_link'] ?? ''); ?>">
-                            <?php if ($plan == 1): ?>
-                                <small class="text-muted">Upgrade to add Facebook page</small>
-                            <?php endif; ?>
                         </div>
                         <div class="col-12">
-                            <label for="instagram" class="form-label"><i class="fab fa-instagram"></i> Instagram Profile</label>
+                            <label for="instagram" class="form-label"><i class="fab fa-instagram me-2"></i> Instagram Profile</label>
                             <input type="url" class="form-control" id="instagram" name="instagram"
                                 value="<?php echo htmlspecialchars($hotel['instagram_link'] ?? ''); ?>">
-                           
                         </div>
                     </div>
                 </div>
@@ -581,49 +634,47 @@ include 'layouts/header.php';
                 <!-- Images Section -->
                 <div class="mb-4">
                     <h3 class="form-section-title">
-                        <i class="fas fa-images"></i> Hotel Images
+                        <i class="fas fa-images me-2"></i> Hotel Images
                     </h3>
                     <div class="row g-3">
                         <div class="col-md-4">
-                            <label class="form-label"><i class="fas fa-image"></i> Hotel Image</label>
+                            <label class="form-label"><i class="fas fa-image me-2"></i> Hotel Image</label>
                             <?php if (!empty($hotel['image_url'])): ?>
                                 <div class="current-image">
-                                    <img src="<?php echo htmlspecialchars($hotel['image_url']); ?>" alt="Current hotel image">
+                                    <img src="<?php echo htmlspecialchars($hotel['image_url']); ?>"
+                                        alt="Current hotel image" style="max-width: 200px; max-height: 150px;" class="img-thumbnail">
                                 </div>
                             <?php endif; ?>
-                            <input type="file" class="form-control" id="hotel_image" name="hotel_image" accept="image/*">
-                            <div class="form-text">Max 5MB (JPG, PNG, GIF)</div>
+                            <input type="file" class="form-control" id="hotel_image" name="hotel_image"
+                                accept="image/*">
+                            <div class="form-text">Max 4MB (JPG, PNG, GIF, WEBP)</div>
                         </div>
-                        
+
+                        <?php if ($plan >= 2): ?>
+                            <div class="col-md-4">
+                                <label class="form-label"><i class="fas fa-map me-2"></i> Map Background</label>
+                                <?php if (!empty($hotel['google_map_background'])): ?>
+                                    <div class="current-image">
+                                        <img src="<?php echo htmlspecialchars($hotel['google_map_background']); ?>"
+                                            alt="Current map background" style="max-width: 200px; max-height: 150px;" class="img-thumbnail">
+                                    </div>
+                                <?php endif; ?>
+                                <input type="file" class="form-control" id="map_background" name="map_background" accept="image/*">
+                                <div class="form-text">Max 4MB (JPG, PNG, GIF, WEBP)</div>
+                            </div>
+                        <?php endif; ?>
+
                         <div class="col-md-4">
-                            <label class="form-label"><i class="fas fa-map"></i> Map Background</label>
-                            <?php if (!empty($hotel['google_map_background'])): ?>
-                                <div class="current-image">
-                                    <img src="<?php echo htmlspecialchars($hotel['google_map_background']); ?>"
-                                        alt="Current map background">
-                                </div>
-                            <?php endif; ?>
-                            <input type="file" class="form-control <?php echo $plan == 1 ? 'disabled-field' : ''; ?>" id="map_background" name="map_background"
-                                accept="image/*" <?php echo $plan == 1 ? 'disabled' : ''; ?>>
-                            <div class="form-text">Max 5MB (JPG, PNG, GIF)</div>
-                            <?php if ($plan == 1): ?>
-                                <small class="text-muted">Upgrade to add map background</small>
-                            <?php endif; ?>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label"><i class="fas fa-image"></i> Hotel Logo</label>
+                            <label class="form-label"><i class="fas fa-image me-2"></i> Hotel Logo</label>
                             <?php if (!empty($hotel['logo_of_hotel'])): ?>
                                 <div class="current-image">
                                     <img src="<?php echo htmlspecialchars($hotel['logo_of_hotel']); ?>"
-                                        alt="Current hotel logo">
+                                        alt="Current hotel logo" style="max-width: 200px; max-height: 150px;" class="img-thumbnail">
                                 </div>
                             <?php endif; ?>
                             <input type="file" class="form-control" id="logo_of_hotel" name="logo_of_hotel"
-                                accept="image/*" >
-                            <div class="form-text">Max 5MB (JPG, PNG, GIF)</div>
-                            <?php if ($plan == 1): ?>
-                                <small class="text-muted">Upgrade to add hotel logo</small>
-                            <?php endif; ?>
+                                accept="image/*">
+                            <div class="form-text">Max 4MB (JPG, PNG, GIF, WEBP)</div>
                         </div>
                     </div>
                 </div>
@@ -643,55 +694,94 @@ include 'layouts/header.php';
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        let menuCounter = <?php echo $menuCounter; ?>;
-        
-        function addDiningMenu() {
-            const wrapper = document.getElementById('dining-menu-wrapper');
-            const div = document.createElement('div');
-            div.className = 'dining-menu-item mb-3 p-3 border rounded';
-            div.setAttribute('data-id', menuCounter);
-            div.innerHTML = `
-                <div class="mb-3">
-                    <input type="radio" class="menu-type" name="menu_type[${menuCounter}]"
-                           value="url" id="menu_type_${menuCounter}_url" checked>
-                    <label for="menu_type_${menuCounter}_url" class="menu-type-label active">
-                        <i class="fas fa-link"></i> URL
-                    </label>
-
-                    <input type="radio" class="menu-type" name="menu_type[${menuCounter}]"
-                           value="text" id="menu_type_${menuCounter}_text">
-                    <label for="menu_type_${menuCounter}_text" class="menu-type-label">
-                        <i class="fas fa-text"></i> Text
-                    </label>
-                </div>
-                <div class="input-group">
-                    <input type="url" name="dining_menu[]" class="form-control"
-                           placeholder="https://example.com/menu.pdf" required>
-                    <button type="button" class="btn btn-danger" onclick="removeDiningMenu(this)">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-            `;
-            wrapper.appendChild(div);
-
-            // Add event listeners for new radio buttons
-            div.querySelectorAll('.menu-type').forEach(radio => {
-                radio.addEventListener('change', function() {
-                    const label = this.closest('.dining-menu-item').querySelector(`label[for="${this.id}"]`);
-                    const allLabels = this.closest('.dining-menu-item').querySelectorAll('.menu-type-label');
-
-                    allLabels.forEach(l => l.classList.remove('active'));
-                    label.classList.add('active');
-
-                    const input = this.closest('.dining-menu-item').querySelector('input[name="dining_menu[]"]');
-                    input.type = this.value === 'url' ? 'url' : 'text';
-                    input.placeholder = this.value === 'url' ?
-                        'https://example.com/menu.pdf' :
-                        'Menu description';
-                });
+        // Handle radio button toggle
+        document.querySelectorAll('input[name="menu_input_type"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                document.getElementById('menu_url_section').style.display = 
+                    this.value === 'url' ? 'block' : 'none';
+                document.getElementById('menu_file_section').style.display = 
+                    this.value === 'file' ? 'block' : 'none';
             });
+        });
 
-            menuCounter++;
+        function addMenuUrl() {
+            const urlInput = document.getElementById('new_menu_url');
+            const url = urlInput.value.trim();
+            
+            if (url) {
+                // Create a new menu item element
+                const wrapper = document.getElementById('dining-menu-wrapper');
+                const newId = Date.now();
+                
+                const newItem = document.createElement('div');
+                newItem.className = 'dining-menu-item mb-3 p-3 border rounded';
+                newItem.dataset.id = newId;
+                newItem.innerHTML = `
+                    <div class="input-group">
+                        <input type="text" name="dining_menu[]" class="form-control"
+                               value="${url}" placeholder="Menu URL or file path" readonly>
+                        <button type="button" class="btn btn-danger" onclick="removeDiningMenu(this)">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `;
+                
+                wrapper.appendChild(newItem);
+                urlInput.value = '';
+            } else {
+                alert('Please enter a valid URL');
+            }
+        }
+
+        function uploadMenuFile() {
+            const fileInput = document.getElementById('new_menu_file');
+            if (fileInput.files.length > 0) {
+                // In a real implementation, you would upload the file via AJAX here
+                // For this example, we'll simulate it by creating a preview
+                
+                const file = fileInput.files[0];
+                const fileName = file.name;
+                const fileType = file.type;
+                
+                // Create a temporary object URL for preview
+                const objectUrl = URL.createObjectURL(file);
+                
+                const wrapper = document.getElementById('dining-menu-wrapper');
+                const newId = Date.now();
+                
+                const newItem = document.createElement('div');
+                newItem.className = 'dining-menu-item mb-3 p-3 border rounded';
+                newItem.dataset.id = newId;
+                
+                let previewContent = '';
+                if (fileType.startsWith('image/')) {
+                    previewContent = `<img src="${objectUrl}" style="max-width: 200px; max-height: 150px;" class="img-thumbnail">`;
+                } else if (fileName.toLowerCase().endsWith('.pdf')) {
+                    previewContent = `
+                        <a href="${objectUrl}" target="_blank" class="btn btn-sm btn-info mt-2">
+                            <i class="fas fa-file-pdf"></i> View PDF (${fileName})
+                        </a>
+                    `;
+                }
+                
+                newItem.innerHTML = `
+                    <div class="input-group">
+                        <input type="text" name="dining_menu[]" class="form-control"
+                               value="${fileName}" placeholder="Menu URL or file path" readonly>
+                        <button type="button" class="btn btn-danger" onclick="removeDiningMenu(this)">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="mt-2">
+                        ${previewContent}
+                    </div>
+                `;
+                
+                wrapper.appendChild(newItem);
+                fileInput.value = '';
+            } else {
+                alert('Please select a file to upload');
+            }
         }
 
         function removeDiningMenu(button) {
@@ -701,23 +791,25 @@ include 'layouts/header.php';
             }
         }
 
-        // Initialize existing menu type toggles
-        document.querySelectorAll('.menu-type').forEach(radio => {
-            radio.addEventListener('change', function() {
-                const label = this.closest('.dining-menu-item').querySelector(`label[for="${this.id}"]`);
-                const allLabels = this.closest('.dining-menu-item').querySelectorAll('.menu-type-label');
-
-                allLabels.forEach(l => l.classList.remove('active'));
-                label.classList.add('active');
-
-                const input = this.closest('.dining-menu-item').querySelector('input[name="dining_menu[]"]');
-                input.type = this.value === 'url' ? 'url' : 'text';
-                input.placeholder = this.value === 'url' ?
-                    'https://example.com/menu.pdf' :
-                    'Menu description';
-            });
+        // Handle plan type change to show/hide relevant sections
+        document.getElementById('plan_type').addEventListener('change', function() {
+            const planType = parseInt(this.value);
+            const descriptionField = document.getElementById('description').closest('.col-12');
+            const hotelDetailsSection = document.querySelector('.form-section-title i.fa-list-alt').closest('.mb-4');
+            const mapBackgroundField = document.querySelector('label[for="map_background"]').closest('.col-md-4');
+            
+            if (planType >= 2) {
+                descriptionField.style.display = 'block';
+                hotelDetailsSection.style.display = 'block';
+                mapBackgroundField.style.display = 'block';
+            } else {
+                descriptionField.style.display = 'none';
+                hotelDetailsSection.style.display = 'none';
+                mapBackgroundField.style.display = 'none';
+            }
         });
     </script>
     <?php include 'layouts/footer.php'; ?>
 </body>
+
 </html>

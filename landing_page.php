@@ -1,5 +1,6 @@
 <?php
 require_once 'config.php';
+
 // Check if ID exists and is valid
 if (!isset($_GET['id'])) {
     header("Location: sorry.php?reason=invalid_request");
@@ -21,28 +22,11 @@ if (!$result || $result->num_rows === 0) {
     exit();
 }
 
-$id = $_GET['id'];
-if (isset($_GET['id'])) {
-    $hotelId = (int) $_GET['id'];
-    $sql = "SELECT * FROM hotels WHERE id = $hotelId AND landing_page_enabled = 1";
-    $result = $conn->query($sql);
-
-    if ($result && $result->num_rows > 0) {
-        $hotel = $result->fetch_assoc();
-        // Display your landing page content here
-    } else {
-        // Hotel not found or landing page disabled
-        header("HTTP/1.0 404 Not Found");
-        include '404.php'; // Create a custom 404 page
-        die();
-    }
-} else {
-    header("HTTP/1.0 400 Bad Request");
-    die("Invalid request");
-}
+$hotel = $result->fetch_assoc();
+$planType = $hotel['plan_type'];
 
 // Fetch visibility status for all items
-$visibilitySql = "SELECT item_name, is_visible FROM item_visibility WHERE hotel_id = $id";
+$visibilitySql = "SELECT item_name, is_visible FROM item_visibility WHERE hotel_id = $hotelId";
 $visibilityResult = $conn->query($visibilitySql);
 $itemVisibility = [];
 
@@ -53,194 +37,169 @@ if ($visibilityResult->num_rows > 0) {
 }
 
 // Function to check if item should be displayed
-function shouldDisplayItem($itemName, $itemVisibility)
-{
-    // If no record exists or is_visible is true, display the item
+function shouldDisplayItem($itemName, $itemVisibility) {
     return !isset($itemVisibility[$itemName]) || (bool) $itemVisibility[$itemName];
 }
 
-// Increment visit counter first
+// Increment visit counter and track visit
 $conn->begin_transaction();
 try {
-    // Get hotel data
-    $stmt = $conn->prepare("SELECT * FROM hotels WHERE id = ?");
-    $stmt->bind_param("i", $id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    if ($result->num_rows !== 1) {
-        throw new Exception("Hotel not found");
-    }
-
-    $hotel = $result->fetch_assoc();
-    $conn->commit();
-
-    // Update visit count
     $updateStmt = $conn->prepare("UPDATE hotels SET visit_count = visit_count + 1 WHERE id = ?");
-    $updateStmt->bind_param("i", $id);
+    $updateStmt->bind_param("i", $hotelId);
     $updateStmt->execute();
 
-    // Insert notification
     $message = "New visit to " . $hotel['hotel_name'];
     $notifStmt = $conn->prepare("INSERT INTO notifications (hotel_id, message) VALUES (?, ?)");
-    $notifStmt->bind_param("is", $id, $message);
+    $notifStmt->bind_param("is", $hotelId, $message);
     $notifStmt->execute();
 
-    // Function to track service clicks
-    function trackServiceClick($conn, $hotelId, $serviceName)
-    {
-        // Check if record exists
-        $checkStmt = $conn->prepare("SELECT id FROM service_clicks WHERE hotel_id = ? AND service_name = ?");
-        $checkStmt->bind_param("is", $hotelId, $serviceName);
-        $checkStmt->execute();
-        $result = $checkStmt->get_result();
-
-        if ($result->num_rows > 0) {
-            // Update existing record
-            $updateStmt = $conn->prepare("UPDATE service_clicks SET click_count = click_count + 1 WHERE hotel_id = ? AND service_name = ?");
-            $updateStmt->bind_param("is", $hotelId, $serviceName);
-            $updateStmt->execute();
-        } else {
-            // Insert new record
-            $insertStmt = $conn->prepare("INSERT INTO service_clicks (hotel_id, service_name, click_count) VALUES (?, ?, 1)");
-            $insertStmt->bind_param("is", $hotelId, $serviceName);
-            $insertStmt->execute();
-        }
-    }
-
-    // Handle service click if requested
-    if (isset($_GET['track'])) {
-        $serviceName = $_GET['service'] ?? '';
-        if (!empty($serviceName)) {
-            trackServiceClick($conn, $id, $serviceName);
-
-            // Redirect to the actual service URL
-            header("Location: " . $_GET['track']);
-            exit();
-        }
-    }
-
+    $conn->commit();
 } catch (Exception $e) {
     $conn->rollback();
 }
+
 // Prepare visible items based on plan type and visibility settings
 $visibleItems = [];
-$planType = $hotel['plan_type'];
 
 // Common items for all plans
-if (shouldDisplayItem('google_review', $itemVisibility)) {
-    $link = ($planType == 1) ? htmlspecialchars($hotel['google_review_link']) : "google_review/index.php?id=" . $hotel['id'];
-    $visibleItems[] = [
+$commonItems = [
+    'google_review' => [
         'icon' => 'fab fa-google',
         'text' => 'Review Us',
-        'link' => "track_service.php?hotel_id=$id&service=Google Review&track=" . urlencode($link)
-    ];
-}
-
-if (shouldDisplayItem('phone', $itemVisibility)) {
-    $visibleItems[] = [
+        'link' => ($planType == 1) ? htmlspecialchars($hotel['google_review_link']) : "google_review/index.php?id=" . $hotel['id']
+    ],
+    'phone' => [
         'icon' => 'fas fa-phone-alt',
         'text' => 'Call Us',
-        'link' => "track_service.php?hotel_id=$id&service=Phone Call&track=" . urlencode('tel:' . htmlspecialchars($hotel['phone']))
-    ];
-}
-
-if (shouldDisplayItem('facebook', $itemVisibility)) {
-    $visibleItems[] = [
+        'link' => 'tel:' . htmlspecialchars($hotel['phone'])
+    ],
+    'facebook' => [
         'icon' => 'fab fa-facebook-f',
         'text' => 'Like Us',
-        'link' => "track_service.php?hotel_id=$id&service=Facebook&track=" . urlencode(htmlspecialchars($hotel['facebook_link']))
-    ];
-}
-
-if (shouldDisplayItem('whatsapp', $itemVisibility)) {
-    $visibleItems[] = [
+        'link' => htmlspecialchars($hotel['facebook_link'])
+    ],
+    'whatsapp' => [
         'icon' => 'fab fa-whatsapp',
         'text' => 'Chat With Us',
-        'link' => "track_service.php?hotel_id=$id&service=WhatsApp&track=" . urlencode('https://wa.me/' . htmlspecialchars($hotel['whatsapp']))
-    ];
-}
-
-if (shouldDisplayItem('instagram', $itemVisibility)) {
-    $visibleItems[] = [
+        'link' => 'https://wa.me/' . htmlspecialchars($hotel['whatsapp'])
+    ],
+    'instagram' => [
         'icon' => 'fab fa-instagram',
         'text' => 'Follow Us!',
-        'link' => "track_service.php?hotel_id=$id&service=Instagram&track=" . urlencode(htmlspecialchars($hotel['instagram_link']))
-    ];
-}
+        'link' => htmlspecialchars($hotel['instagram_link'])
+    ]
+];
 
-// Basic plan shows "Find Us" instead of "Dining Menu"
-if ($planType == 1) {
-    if (shouldDisplayItem('find_us', $itemVisibility)) {
-        $visibleItems[] = [
-            'icon' => 'fas fa-map-marker-alt',
-            'text' => 'Find Us',
-            'link' => "track_service.php?hotel_id=$id&service=Find Us&track=" . urlencode('find_us.php?hotel_id=' . $id)
-        ];
-    }
-} 
-// Advanced and Premium plans show "Dining Menu"
-else {
-    if (shouldDisplayItem('dining_menu', $itemVisibility)) {
-        $diningMenu = $hotel['dining_menu'];
-        $link = filter_var($diningMenu, FILTER_VALIDATE_URL) ? htmlspecialchars($diningMenu) : "dining_menu/dining_menu.php?id=" . $hotel["id"];
-        $visibleItems[] = [
-            'icon' => 'fas fa-concierge-bell',
-            'text' => 'Dining Menu',
-            'link' => "track_service.php?hotel_id=$id&service=Dining Menu&track=" . urlencode($link)
-        ];
-    }
-}
+// Basic plan specific items
+$basicItems = [
+    'find_us' => [
+        'icon' => 'fas fa-map-marker-alt',
+        'text' => 'Find Us',
+        'link' => 'find_us.php?hotel_id=' . $hotelId
+    ]
+];
+
+// Advanced and Premium plan items
+$advancedItems = [
+    'dining_menu' => [
+        'icon' => 'fas fa-concierge-bell',
+        'text' => 'Dining Menu',
+        'link' => filter_var($hotel['dining_menu'], FILTER_VALIDATE_URL) ? 
+                 htmlspecialchars($hotel['dining_menu']) : 
+                 "dining_menu/dining_menu.php?id=" . $hotel['id']
+    ],
+    'local_attractions' => [
+        'icon' => 'fas fa-map-signs',
+        'text' => 'Local Attractions',
+        'link' => 'places/lucknow_places.php?hotel_id=' . $hotelId
+    ],
+    'amenities' => [
+        'icon' => 'fas fa-spa',
+        'text' => 'Amenities',
+        'link' => 'amenities.php?hotel_id=' . $hotelId
+    ]
+];
+
 // Premium plan only items
-if ($planType == 3) {
+$premiumItems = [
+    'tv_channels' => [
+        'icon' => 'fas fa-tv',
+        'text' => 'TV Channels',
+        'link' => '#'
+    ],
+    'offers' => [
+        'icon' => 'fas fa-gift',
+        'text' => 'Offers',
+        'link' => '#'
+    ],
+    'check_in' => [
+        'icon' => 'fas fa-door-open',
+        'text' => 'Check-In',
+        'link' => '#'
+    ],
+    'wifi' => [
+        'icon' => 'fas fa-wifi',
+        'text' => 'WiFi',
+        'link' => '#'
+    ],
+    'pay_us' => [
+        'icon' => 'fas fa-credit-card',
+        'text' => 'Pay Us',
+        'link' => '#'
+    ],
+    'travel_destinations' => [
+        'icon' => 'fas fa-map-marked-alt',
+        'text' => 'Travel Dest',
+        'link' => '#'
+    ]
+];
 
-    if (shouldDisplayItem('tv_channels', $itemVisibility)) {
+// Add items based on plan type
+foreach ($commonItems as $itemName => $item) {
+    if (shouldDisplayItem($itemName, $itemVisibility)) {
         $visibleItems[] = [
-            'icon' => 'fas fa-tv',
-            'text' => 'TV Channels',
-            'link' => "track_service.php?hotel_id=$id&service=TV Channels&track=#"
+            'icon' => $item['icon'],
+            'text' => $item['text'],
+            'link' => "track_service.php?hotel_id=$hotelId&service=" . 
+                     urlencode($item['text']) . "&track=" . urlencode($item['link'])
         ];
     }
+}
 
-
-    if (shouldDisplayItem('offers', $itemVisibility)) {
-        $visibleItems[] = [
-            'icon' => 'fas fa-gift',
-            'text' => 'Offers',
-            'link' => "track_service.php?hotel_id=$id&service=Offers&track=#"
-        ];
+if ($planType == 1) { // Basic plan
+    foreach ($basicItems as $itemName => $item) {
+        if (shouldDisplayItem($itemName, $itemVisibility)) {
+            $visibleItems[] = [
+                'icon' => $item['icon'],
+                'text' => $item['text'],
+                'link' => "track_service.php?hotel_id=$hotelId&service=" . 
+                         urlencode($item['text']) . "&track=" . urlencode($item['link'])
+            ];
+        }
     }
-
-    if (shouldDisplayItem('check_in', $itemVisibility)) {
-        $visibleItems[] = [
-            'icon' => 'fas fa-door-open',
-            'text' => 'Check-In',
-            'link' => "track_service.php?hotel_id=$id&service=Check-In&track=#"
-        ];
+} elseif ($planType >= 2) { // Advanced and Premium plans
+    foreach ($advancedItems as $itemName => $item) {
+        if (shouldDisplayItem($itemName, $itemVisibility)) {
+            $visibleItems[] = [
+                'icon' => $item['icon'],
+                'text' => $item['text'],
+                'link' => "track_service.php?hotel_id=$hotelId&service=" . 
+                         urlencode($item['text']) . "&track=" . urlencode($item['link'])
+            ];
+        }
     }
-
-    if (shouldDisplayItem('wifi', $itemVisibility)) {
-        $visibleItems[] = [
-            'icon' => 'fas fa-wifi',
-            'text' => 'WiFi',
-            'link' => "track_service.php?hotel_id=$id&service=WiFi&track=#"
-        ];
-    }
-
-    if (shouldDisplayItem('pay_us', $itemVisibility)) {
-        $visibleItems[] = [
-            'icon' => 'fas fa-credit-card',
-            'text' => 'Pay Us',
-            'link' => "track_service.php?hotel_id=$id&service=Pay Us&track=#"
-        ];
-    }
-
-    if (shouldDisplayItem('travel_destinations', $itemVisibility)) {
-        $visibleItems[] = [
-            'icon' => 'fas fa-map-marked-alt',
-            'text' => 'Travel Dest',
-            'link' => "track_service.php?hotel_id=$id&service=Travel Destinations&track=#"
-        ];
+    
+    if ($planType == 3) { // Premium plan only
+        foreach ($premiumItems as $itemName => $item) {
+            if (shouldDisplayItem($itemName, $itemVisibility)) {
+                $visibleItems[] = [
+                    'icon' => $item['icon'],
+                    'text' => $item['text'],
+                    'link' => "track_service.php?hotel_id=$hotelId&service=" . 
+                             urlencode($item['text']) . "&track=" . urlencode($item['link'])
+                ];
+            }
+        }
     }
 }
 
@@ -248,9 +207,9 @@ if ($planType == 3) {
 $groupedItems = array_chunk($visibleItems, 2);
 $carouselClass = (count($groupedItems) > 1) ? 'multi-item' : 'single-item-carousel';
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -258,9 +217,9 @@ $carouselClass = (count($groupedItems) > 1) ? 'multi-item' : 'single-item-carous
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.carousel.min.css">
-    <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.theme.default.min.css">
-    <style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.theme.default.min.css">
+   
+   <style>
         :root {
             --primary-color: #28a745;
             --primary-dark: #1e7e34;
@@ -753,20 +712,20 @@ $carouselClass = (count($groupedItems) > 1) ? 'multi-item' : 'single-item-carous
             }
         }
     </style>
+   
 </head>
-
 <body>
-
+    <!-- Your existing HTML structure remains the same -->
     <div class="background-image">
         <?php
         $imagePath = $hotel['image_url'];
         if (!empty($hotel['image_url']) && file_exists($imagePath)) {
-            echo "<img src='$imagePath' alt='Image'>";
+            echo "<img src='$imagePath' alt='Hotel Image'>";
         } else {
-            echo "<img src='hotel-img.jpg' alt='Default Image'>";
+            echo "<img src='hotel-img.jpg' alt='Default Hotel Image'>";
         }
         ?>
-
+        
         <div class="navbar">
             <a class="text-decoration-none" href="<?php echo $hotel['website'] ?>">
                 <?php
@@ -784,7 +743,6 @@ $carouselClass = (count($groupedItems) > 1) ? 'multi-item' : 'single-item-carous
                         🧭
                     </a>
                 </div>
-
                 <div class="time-display-container">
                     <span id="time-display" class="text-white fw-bold"></span>
                 </div>
@@ -819,17 +777,14 @@ $carouselClass = (count($groupedItems) > 1) ? 'multi-item' : 'single-item-carous
         <a href="https://yashinfosystem.com/">
             <img src="logo2 (1).svg" alt="Company Logo">
         </a>
-
-        <p class="mb-2 px-5">&copy; <?php echo date('Y'); ?> <?php echo htmlspecialchars($hotel['hotel_name']); ?>. All
-            Rights Reserved by Yash Infosystem.</p>
+        <p class="mb-2 px-5">&copy; <?php echo date('Y'); ?> <?php echo htmlspecialchars($hotel['hotel_name']); ?>. All Rights Reserved by Yash Infosystem.</p>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js"></script>
-
     <script>
-        // Enhanced clock with smooth animation
+        // Clock and carousel initialization scripts remain the same
         function updateTime() {
             const now = new Date();
             const hours = now.getHours().toString().padStart(2, '0');
@@ -846,46 +801,26 @@ $carouselClass = (count($groupedItems) > 1) ? 'multi-item' : 'single-item-carous
         setInterval(updateTime, 1000);
         updateTime();
 
-        // Initialize Owl Carousel with dynamic settings
         $(document).ready(function () {
             var itemCount = $(".owl-carousel .item").length;
-
             $(".owl-carousel").owlCarousel({
-                // loop: itemCount > 1, // Only loop if we have more than one item
-                nav: itemCount > 1,  // Only show nav if we have more than one item
-                dots: itemCount > 1, // Only show dots if we have more than one item
+                nav: itemCount > 1,
+                dots: itemCount > 1,
                 center: false,
                 navText: ["←", "→"],
                 responsive: {
-                    0: {
-                        items: Math.min(3, itemCount),
-                        stagePadding: 5
-                    },
-                    576: {
-                        items: Math.min(3, itemCount),
-                        stagePadding: 10
-                    },
-                    768: {
-                        items: Math.min(3, itemCount),
-                        stagePadding: 10
-                    },
-                    992: {
-                        items: Math.min(3, itemCount),
-                        stagePadding: 10
-                    },
-                    1200: {
-                        items: Math.min(3, itemCount),
-                        stagePadding: 10
-                    }
+                    0: { items: Math.min(3, itemCount), stagePadding: 5 },
+                    576: { items: Math.min(3, itemCount), stagePadding: 10 },
+                    768: { items: Math.min(3, itemCount), stagePadding: 10 },
+                    992: { items: Math.min(3, itemCount), stagePadding: 10 },
+                    1200: { items: Math.min(3, itemCount), stagePadding: 10 }
                 }
             });
 
-            // Hide navigation if only one item
             if (itemCount <= 1) {
                 $('.owl-nav').hide();
             }
         });
     </script>
 </body>
-
 </html>
