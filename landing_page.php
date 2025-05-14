@@ -12,7 +12,16 @@ if ($hotelId <= 0) {
     header("Location: sorry.php?reason=invalid_id");
     exit();
 }
+// Get hotel_id from URL
+if (isset($_GET['id'])) {
+    $hotel_id = intval($_GET['id']); // secure it
 
+    // Update visit_count
+    $update_sql = "UPDATE hotels SET visit_count = visit_count + 1 WHERE id = ?";
+    $stmt = $conn->prepare($update_sql);
+    $stmt->bind_param("i", $hotel_id);
+    $stmt->execute();
+}
 // Check if hotel exists and landing page is enabled
 $sql = "SELECT * FROM hotels WHERE id = $hotelId AND landing_page_enabled = 1";
 $result = $conn->query($sql);
@@ -58,9 +67,6 @@ try {
     $conn->rollback();
 }
 
-// Prepare visible items based on plan type and visibility settings
-$visibleItems = [];
-
 // Common items for all plans
 $commonItems = [
     'google_review' => [
@@ -91,16 +97,22 @@ $commonItems = [
 ];
 
 // Basic plan specific items
+
 $basicItems = [
     'find_us' => [
         'icon' => 'fas fa-map-marker-alt',
         'text' => 'Find Us',
-        'link' => 'find_us.php?hotel_id=' . $hotelId
+        'link' => htmlspecialchars($hotel['location'])
     ]
 ];
 
-// Advanced and Premium plan items
+// Advanced plan items (includes all Basic items plus more)
 $advancedItems = [
+    'find_us' => [
+        'icon' => 'fas fa-map-marker-alt',
+        'text' => 'Find Us',
+        'link' => htmlspecialchars($hotel['location'])
+    ],
     'dining_menu' => [
         'icon' => 'fas fa-concierge-bell',
         'text' => 'Dining Menu',
@@ -117,40 +129,57 @@ $advancedItems = [
         'icon' => 'fas fa-spa',
         'text' => 'Amenities',
         'link' => 'amenities.php?hotel_id=' . $hotelId
-    ]
-];
-
-// Premium plan only items
-$premiumItems = [
-    'tv_channels' => [
+    ],
+    'email' => [
+        'icon' => 'fas fa-envelope',
+        'text' => 'Email Us',
+        'link' => 'mailto:' . htmlspecialchars($hotel['email'])
+    ],
+    'tv_guide' => [
         'icon' => 'fas fa-tv',
-        'text' => 'TV Channels',
-        'link' => '#'
-    ],
-    'offers' => [
-        'icon' => 'fas fa-gift',
-        'text' => 'Offers',
-        'link' => '#'
-    ],
-    'check_in' => [
-        'icon' => 'fas fa-door-open',
-        'text' => 'Check-In',
-        'link' => '#'
+        'text' => 'TV Guide',
+        'link' => 'tv_guide.php?hotel_id=' . $hotelId
     ],
     'wifi' => [
         'icon' => 'fas fa-wifi',
         'text' => 'WiFi',
-        'link' => '#'
+        'link' => 'wifi.php?hotel_id=' . $hotelId
+    ]
+];
+
+// Premium plan only items (includes all Advanced items plus more)
+$premiumItems = [
+    'dining_menu' => [
+        'icon' => 'fas fa-concierge-bell',
+        'text' => 'Dining Menu',
+        'link' => filter_var($hotel['dining_menu'], FILTER_VALIDATE_URL) ? 
+                 htmlspecialchars($hotel['dining_menu']) : 
+                 "dining_menu/dining_menu.php?id=" . $hotel['id']
+    ],
+    'house_keeping' => [
+        'icon' => 'fas fa-broom',
+        'text' => 'House Keeping',
+        'link' => 'house_keeping.php?hotel_id=' . $hotelId
+    ],
+    'check_in' => [
+        'icon' => 'fas fa-door-open',
+        'text' => 'Check-In',
+        'link' => 'check_in.php?hotel_id=' . $hotelId
     ],
     'pay_us' => [
         'icon' => 'fas fa-credit-card',
         'text' => 'Pay Us',
-        'link' => '#'
+        'link' => 'payment.php?hotel_id=' . $hotelId
+    ],
+    'offers' => [
+        'icon' => 'fas fa-gift',
+        'text' => 'Offers',
+        'link' => 'offers.php?hotel_id=' . $hotelId
     ],
     'travel_destinations' => [
         'icon' => 'fas fa-map-marked-alt',
         'text' => 'Travel Dest',
-        'link' => '#'
+        'link' => 'travel_destinations.php?hotel_id=' . $hotelId
     ]
 ];
 
@@ -177,9 +206,21 @@ if ($planType == 1) { // Basic plan
             ];
         }
     }
-} elseif ($planType >= 2) { // Advanced and Premium plans
+} elseif ($planType == 2) { // Advanced plan
+    // Include Dining Menu first (swapped position)
+    if (shouldDisplayItem('dining_menu', $itemVisibility)) {
+        $visibleItems[] = [
+            'icon' => $advancedItems['dining_menu']['icon'],
+            'text' => $advancedItems['dining_menu']['text'],
+            'link' => "track_service.php?hotel_id=$hotelId&service=" . 
+                     urlencode($advancedItems['dining_menu']['text']) . "&track=" . 
+                     urlencode($advancedItems['dining_menu']['link'])
+        ];
+    }
+    
+    // Include other Advanced items except dining_menu (already added) and find_us (will add later)
     foreach ($advancedItems as $itemName => $item) {
-        if (shouldDisplayItem($itemName, $itemVisibility)) {
+        if ($itemName !== 'dining_menu' && $itemName !== 'find_us' && shouldDisplayItem($itemName, $itemVisibility)) {
             $visibleItems[] = [
                 'icon' => $item['icon'],
                 'text' => $item['text'],
@@ -189,17 +230,61 @@ if ($planType == 1) { // Basic plan
         }
     }
     
-    if ($planType == 3) { // Premium plan only
-        foreach ($premiumItems as $itemName => $item) {
-            if (shouldDisplayItem($itemName, $itemVisibility)) {
-                $visibleItems[] = [
-                    'icon' => $item['icon'],
-                    'text' => $item['text'],
-                    'link' => "track_service.php?hotel_id=$hotelId&service=" . 
-                             urlencode($item['text']) . "&track=" . urlencode($item['link'])
-                ];
-            }
+    // Include Find Us at the end (swapped position)
+    if (shouldDisplayItem('find_us', $itemVisibility)) {
+        $visibleItems[] = [
+            'icon' => $advancedItems['find_us']['icon'],
+            'text' => $advancedItems['find_us']['text'],
+            'link' => "track_service.php?hotel_id=$hotelId&service=" . 
+                     urlencode($advancedItems['find_us']['text']) . "&track=" . 
+                     urlencode($advancedItems['find_us']['link'])
+        ];
+    }
+} elseif ($planType == 3) { // Premium plan
+    // Include Dining Menu first (swapped position)
+    if (shouldDisplayItem('dining_menu', $itemVisibility)) {
+        $visibleItems[] = [
+            'icon' => $premiumItems['dining_menu']['icon'],
+            'text' => $premiumItems['dining_menu']['text'],
+            'link' => "track_service.php?hotel_id=$hotelId&service=" . 
+                     urlencode($premiumItems['dining_menu']['text']) . "&track=" . 
+                     urlencode($premiumItems['dining_menu']['link'])
+        ];
+    }
+    
+    // Include other Advanced items except dining_menu (already added) and find_us (will add later)
+    foreach ($advancedItems as $itemName => $item) {
+        if ($itemName !== 'dining_menu' && $itemName !== 'find_us' && shouldDisplayItem($itemName, $itemVisibility)) {
+            $visibleItems[] = [
+                'icon' => $item['icon'],
+                'text' => $item['text'],
+                'link' => "track_service.php?hotel_id=$hotelId&service=" . 
+                         urlencode($item['text']) . "&track=" . urlencode($item['link'])
+            ];
         }
+    }
+    
+    // Include Premium items except dining_menu (already added)
+    foreach ($premiumItems as $itemName => $item) {
+        if ($itemName !== 'dining_menu' && shouldDisplayItem($itemName, $itemVisibility)) {
+            $visibleItems[] = [
+                'icon' => $item['icon'],
+                'text' => $item['text'],
+                'link' => "track_service.php?hotel_id=$hotelId&service=" . 
+                         urlencode($item['text']) . "&track=" . urlencode($item['link'])
+            ];
+        }
+    }
+    
+    // Include Find Us at the end (swapped position)
+    if (shouldDisplayItem('find_us', $itemVisibility)) {
+        $visibleItems[] = [
+            'icon' => $advancedItems['find_us']['icon'],
+            'text' => $advancedItems['find_us']['text'],
+            'link' => "track_service.php?hotel_id=$hotelId&service=" . 
+                     urlencode($advancedItems['find_us']['text']) . "&track=" . 
+                     urlencode($advancedItems['find_us']['link'])
+        ];
     }
 }
 

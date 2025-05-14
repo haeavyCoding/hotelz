@@ -55,8 +55,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $google_review = trim(filter_input(INPUT_POST, 'google_review', FILTER_SANITIZE_URL));
     $facebook = trim(filter_input(INPUT_POST, 'facebook', FILTER_SANITIZE_URL));
     $instagram = trim(filter_input(INPUT_POST, 'instagram', FILTER_SANITIZE_URL));
-    $dining_menu = isset($_POST['dining_menu']) ? implode(',', array_filter(array_map('trim', $_POST['dining_menu']))) : '';
     $plan_type = isset($_POST['plan_type']) ? intval($_POST['plan_type']) : $plan;
+    $dining_menu_type = isset($_POST['dining_menu_type']) ? $_POST['dining_menu_type'] : 'none';
 
     if (empty($hotel_name) || empty($location)) {
         $error = "Hotel name and location are required";
@@ -65,6 +65,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $image_url = $hotel['image_url'] ?? '';
         $map_background_url = $hotel['google_map_background'] ?? '';
         $logo_url = $hotel['logo_of_hotel'] ?? '';
+        $dining_menu = '';
 
         // Process hotel image upload
         if (isset($_FILES['hotel_image']) && $_FILES['hotel_image']['error'] === UPLOAD_ERR_OK) {
@@ -90,31 +91,55 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             }
         }
 
-        // Process dining menu uploads for Advance/Premium plans
-        if (empty($error) && $plan_type >= 2 && !empty($_FILES['dining_menu_files'])) {
-            $uploaded_menu_files = [];
-            foreach ($_FILES['dining_menu_files']['name'] as $key => $name) {
-                if ($_FILES['dining_menu_files']['error'][$key] === UPLOAD_ERR_OK) {
-                    $file_info = [
-                        'name' => $name,
-                        'type' => $_FILES['dining_menu_files']['type'][$key],
-                        'tmp_name' => $_FILES['dining_menu_files']['tmp_name'][$key],
-                        'error' => $_FILES['dining_menu_files']['error'][$key],
-                        'size' => $_FILES['dining_menu_files']['size'][$key]
-                    ];
-                    
-                    $uploaded_path = processDiningMenuUpload($file_info, $upload_dir);
-                    if ($uploaded_path !== false) {
-                        $uploaded_menu_files[] = $uploaded_path;
-                    } else {
-                        $error = "Failed to upload dining menu file. Only JPG, PNG, GIF, WEBP, PDF allowed (max 4MB).";
-                        break;
+        // Process dining menu based on selected type
+        if (empty($error) && $plan_type >= 2) {
+            if ($dining_menu_type === 'files') {
+                // Process file uploads
+                if (!empty($_FILES['dining_menu_files']['name'][0])) {
+                    $uploaded_menu_files = [];
+                    foreach ($_FILES['dining_menu_files']['name'] as $key => $name) {
+                        if ($_FILES['dining_menu_files']['error'][$key] === UPLOAD_ERR_OK) {
+                            $file_info = [
+                                'name' => $name,
+                                'type' => $_FILES['dining_menu_files']['type'][$key],
+                                'tmp_name' => $_FILES['dining_menu_files']['tmp_name'][$key],
+                                'error' => $_FILES['dining_menu_files']['error'][$key],
+                                'size' => $_FILES['dining_menu_files']['size'][$key]
+                            ];
+                            
+                            $uploaded_path = processDiningMenuUpload($file_info, $upload_dir);
+                            if ($uploaded_path !== false) {
+                                $uploaded_menu_files[] = $uploaded_path;
+                            } else {
+                                $error = "Failed to upload dining menu file. Only JPG, PNG, GIF, WEBP, PDF allowed (max 4MB).";
+                                break;
+                            }
+                        }
                     }
+                    
+                    if (empty($error)) {
+                        // Keep existing files if editing
+                        $existing_files = [];
+                        if (isset($hotel['dining_menu']) && !empty($hotel['dining_menu'])) {
+                            $existing_files = explode(',', $hotel['dining_menu']);
+                        }
+                        
+                        // Combine existing and new files
+                        $dining_menu = implode(',', array_filter(array_merge($existing_files, $uploaded_menu_files)));
+                    }
+                } elseif (isset($hotel['dining_menu'])) {
+                    // Keep existing dining menu if no new files uploaded
+                    $dining_menu = $hotel['dining_menu'];
                 }
-            }
-            
-            if (empty($error)) {
-                $dining_menu = implode(',', array_filter(array_merge(explode(',', $dining_menu), $uploaded_menu_files)));
+            } elseif ($dining_menu_type === 'url') {
+                // Process URL input
+                $dining_menu = trim(filter_input(INPUT_POST, 'dining_menu_url', FILTER_SANITIZE_URL));
+                if (empty($dining_menu)) {
+                    $error = "Please enter a valid dining menu URL";
+                }
+            } elseif (isset($hotel['dining_menu'])) {
+                // Keep existing dining menu if no changes made
+                $dining_menu = $hotel['dining_menu'];
             }
         }
 
@@ -276,9 +301,9 @@ function processDiningMenuUpload($file, $uploadDir)
 
 include 'layouts/header.php';
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -296,7 +321,7 @@ include 'layouts/header.php';
             --light-color: #ecf0f1;
             --dark-color: #2c3e50;
         }
-        
+
         body {
             font-family: 'Poppins', sans-serif;
             background-color: #f8f9fa;
@@ -402,6 +427,38 @@ include 'layouts/header.php';
             color: #6c757d;
         }
         
+        .dining-menu-option {
+            display: none;
+        }
+        
+        .dining-menu-option.active {
+            display: block;
+        }
+        
+        .radio-label {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-right: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .radio-label:hover {
+            border-color: var(--primary-color);
+        }
+        
+        .radio-label input[type="radio"] {
+            margin-right: 8px;
+        }
+        
+        .dining-menu-radio-group {
+            display: flex;
+            margin-bottom: 15px;
+        }
+        
         @media (max-width: 768px) {
             .admin-header h1 {
                 font-size: 1.5rem;
@@ -410,10 +467,18 @@ include 'layouts/header.php';
             .form-section-title {
                 font-size: 1.1rem;
             }
+            
+            .dining-menu-radio-group {
+                flex-direction: column;
+            }
+            
+            .radio-label {
+                margin-bottom: 8px;
+                margin-right: 0;
+            }
         }
     </style>
 </head>
-
 <body>
     <main class="app-main">
         <div class="container py-4">
@@ -502,24 +567,43 @@ include 'layouts/header.php';
                         </div>
 
                         <div class="col-12">
-                            <label class="form-label"><i class="fas fa-utensils me-2"></i> Dining Menus</label>
-                            <div id="dining-menu-wrapper">
-                                <?php
-                                $diningMenus = explode(',', $hotel['dining_menu'] ?? '');
-                                $menuCounter = 0;
-                                if (!empty($diningMenus[0])) {
-                                    foreach ($diningMenus as $menu) {
-                                        $menu = trim($menu);
-                                        if (!empty($menu)) {
-                                            echo '<div class="dining-menu-item mb-3 p-3 border rounded" data-id="' . $menuCounter . '">
-                                                <div class="input-group">
-                                                    <input type="text" name="dining_menu[]" class="form-control"
-                                                           value="' . htmlspecialchars($menu) . '"
-                                                           placeholder="Menu URL or file path" readonly>
-                                                    <button type="button" class="btn btn-danger" onclick="removeDiningMenu(this)">
-                                                        <i class="fas fa-times"></i>
-                                                    </button>
-                                                </div>';
+                            <label class="form-label"><i class="fas fa-utensils me-2"></i> Dining Menu</label>
+                            
+                            <!-- Radio button group for menu type selection -->
+                            <div class="dining-menu-radio-group">
+                                <label class="radio-label">
+                                    <input type="radio" name="dining_menu_type" value="files" 
+                                        <?php echo (!isset($hotel['dining_menu']) || filter_var($hotel['dining_menu'], FILTER_VALIDATE_URL) === false) ? 'checked' : ''; ?>>
+                                    Upload Files
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="dining_menu_type" value="url"
+                                        <?php echo (isset($hotel['dining_menu']) && filter_var($hotel['dining_menu'], FILTER_VALIDATE_URL) !== false) ? 'checked' : ''; ?>>
+                                    Enter URL
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="dining_menu_type" value="none">
+                                    None
+                                </label>
+                            </div>
+                            
+                            <!-- File upload option -->
+                            <div class="dining-menu-option <?php echo (!isset($hotel['dining_menu']) || filter_var($hotel['dining_menu'], FILTER_VALIDATE_URL) === false) ? 'active' : ''; ?>" id="files-option">
+                                <div id="dining-menu-wrapper">
+                                    <?php
+                                    if (!empty($hotel['dining_menu']) && filter_var($hotel['dining_menu'], FILTER_VALIDATE_URL) === false) {
+                                        $diningMenus = explode(',', $hotel['dining_menu']);
+                                        foreach ($diningMenus as $menu) {
+                                            $menu = trim($menu);
+                                            if (!empty($menu)) {
+                                                echo '<div class="dining-menu-item mb-3 p-3 border rounded">
+                                                    <div class="input-group">
+                                                        <input type="text" name="dining_menu_files[]" class="form-control"
+                                                               value="' . htmlspecialchars(basename($menu)) . '" readonly>
+                                                        <button type="button" class="btn btn-danger" onclick="removeDiningMenu(this)">
+                                                            <i class="fas fa-times"></i>
+                                                        </button>
+                                                    </div>';
                                                 
                                                 // Show preview if it's an image
                                                 if (preg_match('/\.(jpg|jpeg|png|gif|webp)$/i', $menu)) {
@@ -534,42 +618,25 @@ include 'layouts/header.php';
                                                     </div>';
                                                 }
                                                 echo '</div>';
-                                            $menuCounter++;
+                                            }
                                         }
                                     }
-                                }
-                                ?>
+                                    ?>
+                                </div>
+                                
+                                <div class="mt-3">
+                                    <input type="file" class="form-control" id="dining_menu_files" name="dining_menu_files[]" multiple accept=".jpg,.jpeg,.png,.gif,.webp,.pdf">
+                                    <div class="form-text">Upload images (JPG, PNG, GIF, WEBP) or PDF files (max 4MB each)</div>
+                                </div>
                             </div>
                             
-                            <div class="mt-3">
-                                <div class="row mb-3">
-                                    <div class="col-md-12">
-                                        <div class="form-check form-check-inline">
-                                            <input class="form-check-input" type="radio" name="menu_input_type" id="menu_url" value="url" checked>
-                                            <label class="form-check-label" for="menu_url">Enter URL</label>
-                                        </div>
-                                        <div class="form-check form-check-inline">
-                                            <input class="form-check-input" type="radio" name="menu_input_type" id="menu_file" value="file">
-                                            <label class="form-check-label" for="menu_file">Upload File</label>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div id="menu_url_section">
-                                    <div class="input-group mb-3">
-                                        <input type="text" class="form-control" id="new_menu_url" placeholder="Enter menu URL">
-                                        <button type="button" class="btn btn-success" onclick="addMenuUrl()">
-                                            <i class="fas fa-plus me-1"></i> Add URL
-                                        </button>
-                                    </div>
-                                </div>
-                                
-                                <div id="menu_file_section" style="display: none;">
-                                    <input type="file" class="form-control" id="new_menu_file" accept=".jpg,.jpeg,.png,.gif,.webp,.pdf">
-                                    <div class="form-text">Upload images (JPG, PNG, GIF, WEBP) or PDF files (max 4MB each)</div>
-                                    <button type="button" class="btn btn-success mt-2" onclick="uploadMenuFile()">
-                                        <i class="fas fa-upload me-1"></i> Upload File
-                                    </button>
+                            <!-- URL option -->
+                            <div class="dining-menu-option <?php echo (isset($hotel['dining_menu']) && filter_var($hotel['dining_menu'], FILTER_VALIDATE_URL) !== false ? 'active' : ''); ?>" id="url-option">
+                                <div class="mb-3">
+                                    <label for="dining_menu_url" class="form-label">Dining Menu URL</label>
+                                    <input type="url" class="form-control" id="dining_menu_url" name="dining_menu_url"
+                                        value="<?php echo (isset($hotel['dining_menu']) && filter_var($hotel['dining_menu'], FILTER_VALIDATE_URL) !== false) ? htmlspecialchars($hotel['dining_menu']) : ''; ?>">
+                                    <div class="form-text">Enter a direct URL to the dining menu (PDF or webpage)</div>
                                 </div>
                             </div>
                         </div>
@@ -694,96 +761,6 @@ include 'layouts/header.php';
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Handle radio button toggle
-        document.querySelectorAll('input[name="menu_input_type"]').forEach(radio => {
-            radio.addEventListener('change', function() {
-                document.getElementById('menu_url_section').style.display = 
-                    this.value === 'url' ? 'block' : 'none';
-                document.getElementById('menu_file_section').style.display = 
-                    this.value === 'file' ? 'block' : 'none';
-            });
-        });
-
-        function addMenuUrl() {
-            const urlInput = document.getElementById('new_menu_url');
-            const url = urlInput.value.trim();
-            
-            if (url) {
-                // Create a new menu item element
-                const wrapper = document.getElementById('dining-menu-wrapper');
-                const newId = Date.now();
-                
-                const newItem = document.createElement('div');
-                newItem.className = 'dining-menu-item mb-3 p-3 border rounded';
-                newItem.dataset.id = newId;
-                newItem.innerHTML = `
-                    <div class="input-group">
-                        <input type="text" name="dining_menu[]" class="form-control"
-                               value="${url}" placeholder="Menu URL or file path" readonly>
-                        <button type="button" class="btn btn-danger" onclick="removeDiningMenu(this)">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                `;
-                
-                wrapper.appendChild(newItem);
-                urlInput.value = '';
-            } else {
-                alert('Please enter a valid URL');
-            }
-        }
-
-        function uploadMenuFile() {
-            const fileInput = document.getElementById('new_menu_file');
-            if (fileInput.files.length > 0) {
-                // In a real implementation, you would upload the file via AJAX here
-                // For this example, we'll simulate it by creating a preview
-                
-                const file = fileInput.files[0];
-                const fileName = file.name;
-                const fileType = file.type;
-                
-                // Create a temporary object URL for preview
-                const objectUrl = URL.createObjectURL(file);
-                
-                const wrapper = document.getElementById('dining-menu-wrapper');
-                const newId = Date.now();
-                
-                const newItem = document.createElement('div');
-                newItem.className = 'dining-menu-item mb-3 p-3 border rounded';
-                newItem.dataset.id = newId;
-                
-                let previewContent = '';
-                if (fileType.startsWith('image/')) {
-                    previewContent = `<img src="${objectUrl}" style="max-width: 200px; max-height: 150px;" class="img-thumbnail">`;
-                } else if (fileName.toLowerCase().endsWith('.pdf')) {
-                    previewContent = `
-                        <a href="${objectUrl}" target="_blank" class="btn btn-sm btn-info mt-2">
-                            <i class="fas fa-file-pdf"></i> View PDF (${fileName})
-                        </a>
-                    `;
-                }
-                
-                newItem.innerHTML = `
-                    <div class="input-group">
-                        <input type="text" name="dining_menu[]" class="form-control"
-                               value="${fileName}" placeholder="Menu URL or file path" readonly>
-                        <button type="button" class="btn btn-danger" onclick="removeDiningMenu(this)">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                    <div class="mt-2">
-                        ${previewContent}
-                    </div>
-                `;
-                
-                wrapper.appendChild(newItem);
-                fileInput.value = '';
-            } else {
-                alert('Please select a file to upload');
-            }
-        }
-
         function removeDiningMenu(button) {
             const item = button.closest('.dining-menu-item');
             if (item) {
@@ -808,8 +785,35 @@ include 'layouts/header.php';
                 mapBackgroundField.style.display = 'none';
             }
         });
+
+        // Handle dining menu type radio buttons
+        const menuTypeRadios = document.querySelectorAll('input[name="dining_menu_type"]');
+        menuTypeRadios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                // Hide all options
+                document.querySelectorAll('.dining-menu-option').forEach(option => {
+                    option.classList.remove('active');
+                });
+                
+                // Show selected option
+                const selectedOption = document.getElementById(this.value + '-option');
+                if (selectedOption) {
+                    selectedOption.classList.add('active');
+                }
+            });
+        });
+
+        // Initialize the correct dining menu option on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const selectedRadio = document.querySelector('input[name="dining_menu_type"]:checked');
+            if (selectedRadio) {
+                const selectedOption = document.getElementById(selectedRadio.value + '-option');
+                if (selectedOption) {
+                    selectedOption.classList.add('active');
+                }
+            }
+        });
     </script>
     <?php include 'layouts/footer.php'; ?>
 </body>
-
 </html>
